@@ -116,8 +116,14 @@ func importUSBIFVendors() -> Int {
         if line.isEmpty || line.hasPrefix("#") { continue }
         let parts = line.components(separatedBy: "\t")
         guard parts.count >= 2, let vid = Int(parts[0]) else { continue }
-        let name = parts[1].trimmingCharacters(in: .whitespaces)
+        var name = parts[1].trimmingCharacters(in: .whitespaces)
         guard !name.isEmpty else { continue }
+        // Strip the " ‐ OBSOLETE" suffix from obsolete vendor entries so
+        // users see clean names. The raw suffix is preserved in the TSV.
+        let obsoleteSuffix = " \u{2010} OBSOLETE"
+        if name.hasSuffix(obsoleteSuffix) {
+            name = String(name.dropLast(obsoleteSuffix.count))
+        }
 
         sqlite3_reset(stmt)
         sqlite3_bind_int(stmt, 1, Int32(vid))

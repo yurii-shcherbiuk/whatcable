@@ -52,6 +52,21 @@ final class VendorDBTests: XCTestCase {
         XCTAssertEqual(VendorDB.name(for: 0x0AF8), "Taiwan Regular Electronics Co., Ltd.")
     }
 
+    // MARK: - Obsolete vendors resolve with clean names
+
+    func testObsoleteVendorsReturnCleanNames() {
+        // Obsolete USB-IF vendors should resolve to the company name
+        // without the " - OBSOLETE" suffix that lives in the raw TSV.
+        XCTAssertEqual(VendorDB.name(for: 0x041C), "Altera Corp.")
+        XCTAssertEqual(VendorDB.name(for: 0x0CC1), "Given Imaging LTD")
+        XCTAssertNotNil(VendorDB.name(for: 0x0001)) // Fry's Electronics
+    }
+
+    func testObsoleteVendorsAreRegistered() {
+        XCTAssertTrue(VendorDB.isRegistered(0x041C))  // Altera Corp.
+        XCTAssertTrue(VendorDB.isRegistered(0x0001))  // Fry's Electronics
+    }
+
     // MARK: - Unregistered VIDs
 
     func testUnregisteredVIDReturnsNil() {
