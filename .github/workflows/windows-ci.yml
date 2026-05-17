@@ -2,16 +2,21 @@ name: Windows CI
 
 on:
   push:
-    branches: [main, windows-portability]
+    branches: [main]
   pull_request:
     branches: [main]
   workflow_dispatch:
 
+# A new push to the same ref cancels an in-progress run, so rapid
+# successive commits don't pile up redundant Windows builds.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build-windows:
-    name: Windows build (experimental)
+    name: Windows build
     runs-on: windows-latest
-    continue-on-error: true
 
     steps:
       - uses: actions/checkout@v4
@@ -20,20 +25,14 @@ jobs:
 
       - uses: compnerd/gha-setup-swift@main
         with:
-          branch: swift-6.0.3-release
-          tag: 6.0.3-RELEASE
+          swift-version: swift-6.2-release
+          swift-build: 6.2-RELEASE
 
-      - name: Build WhatCableCore
-        run: swift build --target WhatCableCore
+      # On Windows the package only contains WhatCableCore, the Windows
+      # backend/CLI, and WhatCableCoreTests (Package.swift excludes the
+      # Darwin-only targets), so plain build/test need no target filters.
+      - name: Build
+        run: swift build
 
-      - name: Build WhatCableWindowsBackend
-        run: swift build --target WhatCableWindowsBackend
-
-      - name: Build WhatCableWindowsCLI
-        run: swift build --target WhatCableWindowsCLI
-
-      - name: Build core tests
-        run: swift build --build-tests --target WhatCableCoreTests
-
-      - name: Run core tests
-        run: swift test --skip-build --filter WhatCableCoreTests
+      - name: Test
+        run: swift test
