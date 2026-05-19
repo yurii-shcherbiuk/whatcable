@@ -114,21 +114,25 @@ struct CableDBTests {
         #expect(CableDB.cableCount >= 10)
     }
 
-    @Test("VID 0 disambiguation")
-    func vid0Disambiguation() {
-        // Three cables with VID=0/PID=0 but different Cable VDO values
-        // should resolve to different brands.
-        let cuktech = CableDB.curatedCable(vid: 0, pid: 0, cableVDO: 0)
+    @Test("all-zero fingerprint never matches a curated cable")
+    func curatedCableRejectsAllZeroFingerprint() {
+        // VID 0 + PID 0 + VDO 0 carries no identifying bits and is
+        // shared by every fully-zeroed budget cable. They all
+        // collapsed onto one arbitrary curated row (the Anker 140W
+        // entry), mislabeling unrelated cables. See #161.
+        #expect(CableDB.curatedCable(vid: 0, pid: 0, cableVDO: 0) == nil)
+    }
+
+    @Test("zeroed VID with a distinguishing Cable VDO still resolves")
+    func vid0DisambiguationByVDO() {
+        // A zeroed VID/PID but a specific non-zero Cable VDO still
+        // identifies the curated entry keyed on that VDO. Only the
+        // all-zero key is rejected; a real VDO is kept.
         let dockcase = CableDB.curatedCable(vid: 0, pid: 0, cableVDO: 0x00082042)
         let vorodcip = CableDB.curatedCable(vid: 0, pid: 0, cableVDO: 0x000A6642)
 
-        #expect(cuktech != nil)
         #expect(dockcase != nil)
         #expect(vorodcip != nil)
-
-        // All three resolve to different brands.
-        #expect(cuktech?.brand != dockcase?.brand)
-        #expect(cuktech?.brand != vorodcip?.brand)
         #expect(dockcase?.brand != vorodcip?.brand)
     }
 }
