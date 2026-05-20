@@ -269,12 +269,7 @@ struct ContentView: View {
         HStack {
             Image(systemName: "cable.connector.horizontal")
                 .scaledFont(.title2)
-            VStack(alignment: .leading, spacing: 2) {
-                Text(AppInfo.name).scaledFont(.headline, weight: .bold)
-                Text(AppInfo.tagline)
-                    .scaledFont(.caption)
-                    .foregroundStyle(.secondary)
-            }
+            Text(AppInfo.name).scaledFont(.headline, weight: .bold)
             Spacer()
             ForEach(Array(PluginRegistry.shared.headerButtonBuilders.enumerated()), id: \.offset) { _, builder in
                 builder()
