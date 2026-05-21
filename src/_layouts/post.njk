@@ -1,5 +1,6 @@
 ---
 layout: base.njk
+ogType: article
 ---
 <main>
   <div class="wrap">
@@ -57,3 +58,32 @@ layout: base.njk
     </p>
   </div>
 </main>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": {{ title | dump | safe }},
+  "description": {{ (summary or "") | dump | safe }},
+  "url": "{{ site.url }}{{ page.url | cleanUrl }}",
+  "datePublished": {{ page.date | isoDate | dump | safe }},
+  "dateModified": {{ page.date | isoDate | dump | safe }},
+  "author": {
+    "@type": "Person",
+    "name": {{ site.author.name | dump | safe }},
+    "url": {{ site.author.url | dump | safe }}
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": {{ site.name | dump | safe }},
+    "url": {{ site.url | dump | safe }},
+    "logo": {
+      "@type": "ImageObject",
+      "url": "{{ site.url }}/icon.png"
+    }
+  },
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "{{ site.url }}{{ page.url | cleanUrl }}"
+  }
+}
+</script>

@@ -2,6 +2,7 @@
 layout: base.njk
 permalink: /blog.html
 title: "Blog"
+documentTitle: "WhatCable Blog: USB-C, Thunderbolt & Cable Diagnostics"
 description: "Notes, deep dives, and investigations on USB-C, Thunderbolt, and cable diagnostics from the WhatCable team."
 feedUrl: /blog/feed.xml
 feedTitle: WhatCable Blog
@@ -49,3 +50,32 @@ extraHead: |
     {% endif %}
   </div>
 </main>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Blog",
+  "name": "WhatCable Blog",
+  "description": {{ description | dump | safe }},
+  "url": "{{ site.url }}/blog",
+  "publisher": {
+    "@type": "Organization",
+    "name": {{ site.name | dump | safe }},
+    "url": {{ site.url | dump | safe }},
+    "logo": {
+      "@type": "ImageObject",
+      "url": "{{ site.url }}/icon.png"
+    }
+  },
+  "blogPost": [
+{%- for post in collections.posts %}
+    {
+      "@type": "BlogPosting",
+      "headline": {{ post.data.title | dump | safe }},
+      "description": {{ (post.data.summary or "") | dump | safe }},
+      "url": "{{ site.url }}{{ post.url | cleanUrl }}",
+      "datePublished": {{ post.date | isoDate | dump | safe }}
+    }{% if not loop.last %},{% endif %}
+{%- endfor %}
+  ]
+}
+</script>
