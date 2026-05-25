@@ -826,4 +826,147 @@ struct JSONFormatterTests {
         // Port-USB-C@1 should resolve via Socket ID "1" -> host switch UID.
         #expect(port["thunderboltSwitchUID"] as? Int64 == 12345)
     }
+
+    /// Companion to the test above: a MagSafe port that shares the same
+    /// `@1` socket suffix as the first USB-C port (universal on M-class
+    /// MacBooks) must NOT inherit the colliding TB switch UID. The
+    /// `socketID(for:)` gate refuses the lookup on any port that doesn't
+    /// carry data. Without this, the MagSafe JSON would mis-report a
+    /// Thunderbolt switch attachment it never had (issue #195).
+    @Test("MagSafe port has null thunderboltSwitchUID despite colliding suffix")
+    func magSafePortHasNullThunderboltSwitchUid() throws {
+        let host = IOThunderboltSwitch(
+            id: 408750268121704800,
+            className: "IOIOThunderboltSwitchType5",
+            vendorID: 1452, vendorName: "Apple Inc.", modelName: "iOS",
+            routerID: 0, depth: 0, routeString: 0,
+            upstreamPortNumber: 7, maxPortNumber: 8,
+            supportedSpeed: SupportedSpeedMask(rawValue: 12),
+            ports: [
+                IOThunderboltPort(
+                    portNumber: 1, socketID: "1", adapterType: .lane,
+                    currentSpeed: .usb4Tb4,
+                    currentWidth: LinkWidth(rawValue: 0x2),
+                    targetWidth: .dual,
+                    rawTargetSpeed: 12, linkBandwidthRaw: 400
+                )
+            ],
+            parentSwitchUID: nil
+        )
+
+        let magSafe = USBCPort(
+            id: 2,
+            serviceName: "Port-MagSafe 3@1",
+            className: "AppleTCControllerType11",
+            portDescription: "Port-MagSafe 3@1",
+            portTypeDescription: "MagSafe 3",
+            portNumber: 1,
+            connectionActive: true,
+            activeCable: nil, opticalCable: nil,
+            usbActive: nil, superSpeedActive: nil,
+            usbModeType: nil, usbConnectString: nil,
+            transportsSupported: [],
+            transportsActive: ["CC"],
+            transportsProvisioned: ["CC"],
+            plugOrientation: nil, plugEventCount: nil, connectionCount: nil,
+            overcurrentCount: nil, pinConfiguration: [:],
+            powerCurrentLimits: [], firmwareVersion: nil, bootFlagsHex: nil,
+            rawProperties: [:]
+        )
+
+        let json = try JSONFormatter.render(
+            ports: [magSafe], sources: [], identities: [], showRaw: false,
+            thunderboltSwitches: [host]
+        )
+        let obj = parse(json)
+        let port = (obj["ports"] as? [[String: Any]])?.first ?? [:]
+        // The `thunderboltSwitchUID` field is encoded with
+        // `encodeIfPresent`, so a nil value is omitted from the JSON
+        // entirely. Either absent or explicitly null is fine; what
+        // matters is that the colliding USB-C@1 switch UID does NOT
+        // appear.
+        let switchUID = port["thunderboltSwitchUID"]
+        #expect(switchUID == nil || switchUID is NSNull,
+            "MagSafe should not inherit USB-C@1's TB switch UID via the @N suffix collision; got: \(String(describing: switchUID))")
+        // Defence-in-depth: no data-link verdict should appear on this
+        // port either, since `carriesData` is false. Same encoding
+        // rule, so the key is either absent or null.
+        let dataLink = port["dataLink"]
+        #expect(dataLink == nil || dataLink is NSNull,
+            "MagSafe should not produce a data-link verdict, got: \(String(describing: dataLink))")
+    }
+
+    /// When the cable's e-marker reports a speed meaningfully below the
+    /// active link rate and there is no controller (CIO) reading to
+    /// break the tie, the new `.cableContradictsActive` bottleneck must
+    /// flow through to the JSON output. Replaces the old silent
+    /// cable-floor promotion that produced a confidently-wrong
+    /// "Running at full data speed" verdict (issue #195 amplifier).
+    @Test("dataLink.bottleneck encodes cableContradictsActive")
+    func dataLinkBottleneckEncodesCableContradictsActive() throws {
+        // 40 Gbps TB lane on the host root; the USB-C port advertises
+        // "CIO" in transportsActive so the activeTBGbps gate is open.
+        let host = IOThunderboltSwitch(
+            id: 1, className: "IOIOThunderboltSwitchType5",
+            vendorID: 1452, vendorName: "Apple Inc.", modelName: "iOS",
+            routerID: 0, depth: 0, routeString: 0,
+            upstreamPortNumber: 7, maxPortNumber: 8,
+            supportedSpeed: SupportedSpeedMask(rawValue: 12),
+            ports: [
+                IOThunderboltPort(
+                    portNumber: 1, socketID: "1", adapterType: .lane,
+                    currentSpeed: .usb4Tb4,
+                    currentWidth: LinkWidth(rawValue: 0x2),
+                    targetWidth: nil, rawTargetSpeed: nil,
+                    linkBandwidthRaw: nil
+                )
+            ],
+            parentSwitchUID: nil
+        )
+
+        let usbC = USBCPort(
+            id: 1,
+            serviceName: "Port-USB-C@1",
+            className: "AppleHPMInterfaceType10",
+            portDescription: "Port-USB-C@1",
+            portTypeDescription: "USB-C",
+            portNumber: 1,
+            connectionActive: true,
+            activeCable: nil, opticalCable: nil,
+            usbActive: nil, superSpeedActive: nil,
+            usbModeType: nil, usbConnectString: nil,
+            transportsSupported: ["CC", "USB2", "USB3", "CIO", "DisplayPort"],
+            transportsActive: ["CC", "CIO"],
+            transportsProvisioned: [],
+            plugOrientation: nil, plugEventCount: nil, connectionCount: nil,
+            overcurrentCount: nil, pinConfiguration: [:],
+            powerCurrentLimits: [], firmwareVersion: nil, bootFlagsHex: nil,
+            rawProperties: [:]
+        )
+
+        // E-marker reporting USB 2.0 (speedCode 0 = 0.48 Gbps); no CIO
+        // capability passed, so there is no tie-break.
+        let validLatency: UInt32 = 1 << 13
+        let cableVDO: UInt32 = 0 | (1 << 5) | validLatency
+        let idHeader: UInt32 = 0x1800_0000
+        let cableEmarker = USBPDSOP(
+            id: 9, endpoint: .sopPrime,
+            parentPortType: 2, parentPortNumber: 1,
+            vendorID: 0, productID: 0, bcdDevice: 0,
+            vdos: [idHeader, 0, 0, cableVDO],
+            specRevision: 0
+        )
+
+        let json = try JSONFormatter.render(
+            ports: [usbC], sources: [], identities: [cableEmarker],
+            showRaw: false, thunderboltSwitches: [host]
+        )
+        let obj = parse(json)
+        let port = (obj["ports"] as? [[String: Any]])?.first ?? [:]
+        let dataLink = port["dataLink"] as? [String: Any] ?? [:]
+        #expect(dataLink["bottleneck"] as? String == "cableContradictsActive",
+            "expected cableContradictsActive bottleneck, got: \(String(describing: dataLink["bottleneck"]))")
+        #expect(dataLink["isWarning"] as? Bool == true,
+            "cableContradictsActive should warn; got isWarning: \(String(describing: dataLink["isWarning"]))")
+    }
 }
