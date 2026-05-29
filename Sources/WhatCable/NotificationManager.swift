@@ -15,7 +15,7 @@ final class NotificationManager {
     private var cancellables = Set<AnyCancellable>()
 
     private var knownDeviceIDs: Set<UInt64> = []
-    private var knownSourceIDs: Set<UInt64> = []
+    private var knownSourceKeys: Set<String> = []
     private var didPrimeBaseline = false
 
     private init() {}
@@ -26,7 +26,7 @@ final class NotificationManager {
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }
             self.knownDeviceIDs = Set(WatcherHub.shared.deviceWatcher.devices.map(\.id))
-            self.knownSourceIDs = Set(WatcherHub.shared.powerWatcher.sources.map(\.id))
+            self.knownSourceKeys = Set(WatcherHub.shared.powerWatcher.sources.map(\.stableKey))
             self.didPrimeBaseline = true
         }
 
@@ -83,10 +83,13 @@ final class NotificationManager {
 
     private func diffSources(_ current: [PowerSource]) {
         guard didPrimeBaseline else { return }
-        let currentIDs = Set(current.map(\.id))
-        let added = current.filter { !knownSourceIDs.contains($0.id) }
-        let removedCount = knownSourceIDs.subtracting(currentIDs).count
-        knownSourceIDs = currentIDs
+        // Key on stableKey (port + name), not the volatile registry id, so a
+        // recycled charger service does not read as a brand-new source. See
+        // issue #227.
+        let currentKeys = Set(current.map(\.stableKey))
+        let added = current.filter { !knownSourceKeys.contains($0.stableKey) }
+        let removedCount = knownSourceKeys.subtracting(currentKeys).count
+        knownSourceKeys = currentKeys
 
         guard AppSettings.shared.notifyOnChanges else { return }
 
