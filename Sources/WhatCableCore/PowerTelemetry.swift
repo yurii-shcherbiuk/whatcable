@@ -169,6 +169,42 @@ public struct CableResistanceEstimate: Codable, Sendable, Equatable {
         self.rSquared = rSquared
         self.status = status
     }
+
+    /// How a stable resistance reading rates against the USB-C spec budget.
+    public enum Tier: String, Sendable {
+        /// Comfortably within the spec budget.
+        case good
+        /// Within the budget but approaching the ceiling.
+        case marginal
+        /// At or over the spec budget: out of spec for this cable's rating.
+        case high
+    }
+
+    /// Classify the resistance against the USB Type-C IR-drop budget
+    /// (spec §4.4.1), which the estimate measures as the VBUS+GND loop (the
+    /// Mac can only sense VBUS relative to its own ground, so its reading
+    /// includes the GND return drop). The budget is current-rated, so a 5 A
+    /// cable's ceiling is tighter than a 3 A's:
+    ///
+    /// - 5 A loop budget ≈ 150 mΩ → Good < 100, Marginal 100–150, High > 150.
+    /// - 3 A loop budget ≈ 250 mΩ → Good < 165, Marginal 165–250, High > 250.
+    ///
+    /// Full working: `research/cable-resistance-thresholds.md`.
+    ///
+    /// - Parameter ratedFiveA: whether the cable is a 5 A-class cable. Pass
+    ///   `true` only when known (e.g. the negotiated contract exceeded 3 A,
+    ///   which only a 5 A-rated cable allows). Default `false` applies the
+    ///   looser 3 A budget so a lightly-loaded 5 A cable is never over-flagged.
+    /// - Returns: the tier, or `nil` when the estimate isn't `stable` (no
+    ///   trustworthy reading yet).
+    public func tier(ratedFiveA: Bool) -> Tier? {
+        guard status == .stable else { return nil }
+        let goodBelow = ratedFiveA ? 100.0 : 165.0
+        let budget = ratedFiveA ? 150.0 : 250.0
+        if milliohms < goodBelow { return .good }
+        if milliohms <= budget { return .marginal }
+        return .high
+    }
 }
 
 public struct PowerMonitorSnapshot: Codable, Sendable, Equatable {
