@@ -169,7 +169,7 @@ extraHead: |
       <li><strong>Vendor (USB-IF)</strong> - The registered name for that VID. "Unregistered" means the VID isn't in the USB-IF database.</li>
       <li><strong>XID</strong> - A secondary identifier some vendors use. "none" means the cable didn't report one.</li>
       <li><strong>Speed</strong> - The maximum data rate the e-marker advertises.</li>
-      <li><strong>Power</strong> - Maximum current and voltage the cable claims to support.</li>
+      <li><strong>Power</strong> - Maximum current and voltage the cable's e-marker claims. The wattage is the real deliverable at the USB-PD ceiling, not current x voltage: PD never exceeds 48 V, so a cable that reports 50 V still tops out at 48 V × 5 A = 240 W, not 250 W.</li>
       <li><strong>Source</strong> - Link to the GitHub issue where this cable was reported.</li>
     </ul>
 
