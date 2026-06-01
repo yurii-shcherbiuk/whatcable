@@ -262,7 +262,7 @@ Issues and PRs welcome. The code is small and tries to stay readable.
 | [`Sources/WhatCableCore/`](Sources/WhatCableCore/) | Shared diagnostic logic, PD bit decoding, text formatting |
 | [`Sources/WhatCableDarwinBackend/`](Sources/WhatCableDarwinBackend/) | IOKit watchers (port state, PD identity, power sources, USB devices, Thunderbolt fabric) |
 | [`Sources/WhatCableAppKit/`](Sources/WhatCableAppKit/) | Plugin registry and extension points (hooks for Pro features, CLI commands, menu items) |
-| [`Sources/WhatCablePlugins/`](Sources/WhatCablePlugins/) | Pro features (power metering, licence, cable diagnostics view, liquid detection) |
+| [`Sources/WhatCablePlugins/`](Sources/WhatCablePlugins/) | Pro features (power metering, licence, cable and display diagnostics, liquid detection) |
 | [`Sources/WhatCableWidget/`](Sources/WhatCableWidget/) | WidgetKit extension (small/medium/large desktop widgets) |
 | [`Sources/WhatCableCLI/`](Sources/WhatCableCLI/) | CLI binary, shares Core/Backend/Plugins with the app |
 
@@ -276,7 +276,7 @@ To add a new language:
 2. Translate the values (leave the keys as-is)
 3. Make sure format specifiers (`%@`, `%lld`, `%1$@`, etc.) match the English originals exactly
 4. Run `plutil -lint` on your files to check for syntax errors
-5. Add the language to the picker in [`Sources/WhatCable/SettingsView.swift`](Sources/WhatCable/SettingsView.swift)
+5. Add the language to the picker in [`Sources/WhatCable/Views/SettingsView.swift`](Sources/WhatCable/Views/SettingsView.swift)
 
 ### Diagnostic data
 
