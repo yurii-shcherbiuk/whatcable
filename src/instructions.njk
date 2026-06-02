@@ -468,7 +468,7 @@ brew install --cask whatcable</pre>
   This is normal for most everyday USB-C cables. Only higher-rated cables (Thunderbolt, USB4, or cables rated for 100W+) are required to have a chip that reports detailed information. Your cable still works, there's just nothing extra to read.
 </p>
 <p>
-  Some cables do have the chip but only reveal the data when a device is drawing enough power at the other end. Try plugging in a higher-wattage charger (60W or above) and check again.
+  Some cables do have the chip, but macOS only reads it when the connection needs the cable's identity: a charge drawing more than 3A (a 5A cable on a high-wattage charger), or a Thunderbolt / USB4 link. On a low-power charger or a plain data connection, macOS may never query the chip, so there's nothing to show even though the cable is marked. Try plugging in a higher-wattage charger (60W or above), or connect it to a Thunderbolt device, and check again.
 </p>
 
 <h3>Vendor shows as "Unregistered / unknown"</h3>
