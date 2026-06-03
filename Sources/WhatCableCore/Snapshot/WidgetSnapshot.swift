@@ -52,6 +52,16 @@ public struct WidgetSnapshot: Codable, Equatable {
         public let portKey: String?
         /// Wattage of any charger on this port, when available.
         public let chargerWatts: Int?
+        /// Structured negotiated link speed, for the colour-coded speed badge.
+        /// Nil when there's no active data link to badge.
+        public let linkSpeed: LinkSpeed?
+        /// Compact live display mode for the display card, e.g. "5K 60Hz".
+        /// Nil unless a display is connected on this port.
+        public let displayMode: String?
+        /// Monitor name from EDID when a display is connected, e.g. "Studio
+        /// Display". Often nil on generic displays; the card falls back to the
+        /// mode alone.
+        public let monitorName: String?
 
         public init(
             id: UInt64,
@@ -64,7 +74,10 @@ public struct WidgetSnapshot: Codable, Equatable {
             deviceCount: Int = 0,
             recentPower: [Double] = [],
             portKey: String? = nil,
-            chargerWatts: Int? = nil
+            chargerWatts: Int? = nil,
+            linkSpeed: LinkSpeed? = nil,
+            displayMode: String? = nil,
+            monitorName: String? = nil
         ) {
             self.id = id
             self.portName = portName
@@ -77,12 +90,16 @@ public struct WidgetSnapshot: Codable, Equatable {
             self.recentPower = recentPower
             self.portKey = portKey
             self.chargerWatts = chargerWatts
+            self.linkSpeed = linkSpeed
+            self.displayMode = displayMode
+            self.monitorName = monitorName
         }
 
         /// Custom decoder so that JSON written before `deviceCount` was
         /// added (pre-0.9.0) still decodes without error. Swift's
         /// synthesized Decodable ignores init parameter defaults, so
-        /// without this a missing key would throw.
+        /// without this a missing key would throw. The same applies to the
+        /// later `linkSpeed` / `displayMode` / `monitorName` fields.
         public init(from decoder: Decoder) throws {
             let c = try decoder.container(keyedBy: CodingKeys.self)
             id = try c.decode(UInt64.self, forKey: .id)
@@ -96,6 +113,9 @@ public struct WidgetSnapshot: Codable, Equatable {
             recentPower = try c.decodeIfPresent([Double].self, forKey: .recentPower) ?? []
             portKey = try c.decodeIfPresent(String.self, forKey: .portKey)
             chargerWatts = try c.decodeIfPresent(Int.self, forKey: .chargerWatts)
+            linkSpeed = try c.decodeIfPresent(LinkSpeed.self, forKey: .linkSpeed)
+            displayMode = try c.decodeIfPresent(String.self, forKey: .displayMode)
+            monitorName = try c.decodeIfPresent(String.self, forKey: .monitorName)
         }
     }
 

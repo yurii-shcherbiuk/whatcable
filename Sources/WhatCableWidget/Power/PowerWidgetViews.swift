@@ -42,7 +42,62 @@ struct PowerMonitorEntryView: View {
     }
 }
 
-// MARK: - Small: battery % and charge status
+// MARK: - Shared power presentation
+
+extension WidgetSnapshot.PowerState {
+    /// Colour for the battery glyph: green full, yellow charging, muted idle.
+    var chargeColor: Color {
+        if fullyCharged { return .green }
+        if isCharging { return .yellow }
+        return .secondary
+    }
+
+    var statusLabel: String {
+        if isDesktopMac { return prettyAdapterDescription ?? "" }
+        if fullyCharged { return String(localized: "Battery full", bundle: _coreLocalizedBundle) }
+        if isCharging { return String(localized: "Charging", bundle: _coreLocalizedBundle) }
+        return String(localized: "On battery", bundle: _coreLocalizedBundle)
+    }
+
+    /// IOKit hands us the adapter description lowercase ("pd charger"). Present
+    /// it tidily, uppercasing known acronyms so it reads "PD Charger".
+    var prettyAdapterDescription: String? {
+        guard let raw = adapterDescription, !raw.isEmpty else { return nil }
+        return raw.split(separator: " ").map { word -> String in
+            switch word.lowercased() {
+            case "pd": return "PD"
+            case "ac": return "AC"
+            case "usb", "usbc", "usb-c": return "USB-C"
+            case "magsafe": return "MagSafe"
+            default: return word.prefix(1).uppercased() + word.dropFirst().lowercased()
+            }
+        }.joined(separator: " ")
+    }
+
+    var batteryIcon: String {
+        if isDesktopMac { return "desktopcomputer" }
+        if isCharging { return "battery.100.bolt" }
+        guard let pct = batteryPercent else { return "battery.100" }
+        if pct <= 25 { return "battery.25" }
+        if pct <= 50 { return "battery.50" }
+        if pct <= 75 { return "battery.75" }
+        return "battery.100"
+    }
+
+    /// Big-number tint: red low, orange mid, neutral healthy.
+    func batteryTint(_ pct: Int) -> Color {
+        if pct <= 20 { return .red }
+        if pct <= 50 { return .orange }
+        return .primary
+    }
+}
+
+/// "3.1W" from a wattage double, for a pill or muted line.
+private func wattText(_ w: Double) -> String {
+    String(format: "%.1f", w) + "W"
+}
+
+// MARK: - Small: battery anchor + charger pill
 
 struct PowerSmallView: View {
     let snapshot: WidgetSnapshot
@@ -50,16 +105,17 @@ struct PowerSmallView: View {
     private var power: WidgetSnapshot.PowerState { snapshot.powerState! }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack(spacing: 6) {
-                Image(systemName: batteryIcon)
+        VStack(alignment: .leading, spacing: WidgetMetrics.s) {
+            WidgetHeader(title: String(localized: "Power Monitor", bundle: _coreLocalizedBundle))
+            Spacer(minLength: 0)
+
+            HStack(spacing: WidgetMetrics.s) {
+                Image(systemName: power.batteryIcon)
                     .font(.title2)
-                    .foregroundStyle(statusColor)
+                    .foregroundStyle(power.chargeColor)
                 Spacer()
                 if let watts = power.adapterWatts {
-                    Text("\(watts)W")
-                        .font(.system(.caption, design: .rounded, weight: .bold))
-                        .foregroundStyle(.secondary)
+                    PowerPill(watts: watts)
                 }
             }
 
@@ -68,60 +124,26 @@ struct PowerSmallView: View {
                     .font(.headline)
             } else if let pct = power.batteryPercent {
                 Text("\(pct)%")
-                    .font(.system(size: 36, weight: .bold, design: .rounded))
-                    .foregroundStyle(batteryColor(pct))
+                    .font(.system(size: 34, weight: .bold, design: .rounded))
+                    .monospacedDigit()
+                    .foregroundStyle(power.batteryTint(pct))
             }
 
-            Text(statusLabel)
+            Text(power.statusLabel)
                 .font(.caption)
                 .foregroundStyle(.secondary)
 
             Spacer(minLength: 0)
 
             if power.recentSystemPower.count >= 2 {
-                PowerSparkline(samples: power.recentSystemPower, color: .yellow)
+                PowerSparkline(samples: power.recentSystemPower, color: .orange)
                     .frame(height: 18)
             }
         }
     }
-
-    private var batteryIcon: String {
-        if power.isDesktopMac { return "desktopcomputer" }
-        if power.isCharging { return "battery.100.bolt" }
-        guard let pct = power.batteryPercent else { return "battery.100" }
-        if pct <= 25 { return "battery.25" }
-        if pct <= 50 { return "battery.50" }
-        if pct <= 75 { return "battery.75" }
-        return "battery.100"
-    }
-
-    private var statusLabel: String {
-        if power.isDesktopMac {
-            return power.adapterDescription ?? ""
-        }
-        if power.fullyCharged {
-            return String(localized: "Battery full", bundle: _coreLocalizedBundle)
-        }
-        if power.isCharging {
-            return String(localized: "Charging", bundle: _coreLocalizedBundle)
-        }
-        return String(localized: "On battery", bundle: _coreLocalizedBundle)
-    }
-
-    private var statusColor: Color {
-        if power.fullyCharged { return .green }
-        if power.isCharging { return .yellow }
-        return .secondary
-    }
-
-    private func batteryColor(_ pct: Int) -> Color {
-        if pct <= 20 { return .red }
-        if pct <= 50 { return .orange }
-        return .primary
-    }
 }
 
-// MARK: - Medium: battery + charger info side by side
+// MARK: - Medium: battery anchor + charger / draw
 
 struct PowerMediumView: View {
     let snapshot: WidgetSnapshot
@@ -129,79 +151,59 @@ struct PowerMediumView: View {
     private var power: WidgetSnapshot.PowerState { snapshot.powerState! }
 
     var body: some View {
-        HStack(spacing: 0) {
-            VStack(alignment: .leading, spacing: 4) {
-                HStack(spacing: 6) {
-                    Image(systemName: power.isDesktopMac ? "desktopcomputer" : "battery.100")
-                        .font(.title3)
-                        .foregroundStyle(statusColor)
-                    if power.isDesktopMac {
-                        Text(String(localized: "Power connected", bundle: _coreLocalizedBundle))
-                            .font(.headline)
-                    } else if let pct = power.batteryPercent {
-                        Text("\(pct)%")
-                            .font(.system(.title, design: .rounded, weight: .bold))
-                    }
-                }
-                Text(statusLabel)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
+        VStack(alignment: .leading, spacing: WidgetMetrics.s) {
+            WidgetHeader(title: String(localized: "Power Monitor", bundle: _coreLocalizedBundle))
 
-            Divider().padding(.vertical, 4)
-
-            VStack(alignment: .leading, spacing: 4) {
-                if let watts = power.adapterWatts {
-                    HStack(spacing: 4) {
-                        Image(systemName: "bolt.fill")
-                            .font(.caption)
-                            .foregroundStyle(.yellow)
-                        Text("\(watts)W")
-                            .font(.system(.title2, design: .rounded, weight: .bold))
+            HStack(spacing: WidgetMetrics.m) {
+                VStack(alignment: .leading, spacing: WidgetMetrics.xxs) {
+                    HStack(spacing: WidgetMetrics.s) {
+                        Image(systemName: power.batteryIcon)
+                            .font(.title3)
+                            .foregroundStyle(power.chargeColor)
+                        if power.isDesktopMac {
+                            Text(String(localized: "Power connected", bundle: _coreLocalizedBundle))
+                                .font(.headline)
+                        } else if let pct = power.batteryPercent {
+                            Text("\(pct)%")
+                                .font(.system(.title, design: .rounded, weight: .bold))
+                                .monospacedDigit()
+                        }
                     }
-                }
-                if let desc = power.adapterDescription {
-                    Text(desc)
+                    Text(power.statusLabel)
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
                 }
-                if let sysW = power.systemPowerInWatts {
-                    let formatted = String(format: "%.1f", sysW)
-                    let drawFormat = String(localized: "%@W draw", bundle: _coreLocalizedBundle)
-                    Text(String(format: drawFormat, formatted))
-                        .font(.caption2)
-                        .foregroundStyle(.tertiary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+                Divider()
+
+                VStack(alignment: .leading, spacing: WidgetMetrics.xs) {
+                    if let watts = power.adapterWatts {
+                        PowerPill(watts: watts)
+                    }
+                    if let desc = power.prettyAdapterDescription {
+                        Text(desc)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                    }
+                    if let sysW = power.systemPowerInWatts {
+                        let drawFormat = String(localized: "%@W draw", bundle: _coreLocalizedBundle)
+                        Text(String(format: drawFormat, String(format: "%.1f", sysW)))
+                            .font(.caption2)
+                            .monospacedDigit()
+                            .foregroundStyle(.tertiary)
+                    }
+                    if power.recentSystemPower.count >= 2 {
+                        PowerSparkline(samples: power.recentSystemPower, color: .orange)
+                            .frame(height: 18)
+                    }
                 }
-                if power.recentSystemPower.count >= 2 {
-                    PowerSparkline(samples: power.recentSystemPower, color: .yellow)
-                        .frame(height: 18)
-                }
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.leading, 8)
+            Spacer(minLength: 0)
         }
-    }
-
-    private var statusLabel: String {
-        if power.isDesktopMac {
-            return power.adapterDescription ?? ""
-        }
-        if power.fullyCharged {
-            return String(localized: "Battery full", bundle: _coreLocalizedBundle)
-        }
-        if power.isCharging {
-            return String(localized: "Charging", bundle: _coreLocalizedBundle)
-        }
-        return String(localized: "On battery", bundle: _coreLocalizedBundle)
-    }
-
-    private var statusColor: Color {
-        if power.fullyCharged { return .green }
-        if power.isCharging { return .yellow }
-        return .secondary
     }
 }
 
@@ -212,103 +214,88 @@ struct PowerLargeView: View {
 
     private var power: WidgetSnapshot.PowerState { snapshot.powerState! }
 
+    /// Per-port rows that fit below the battery / charger / draw rows before
+    /// the large widget runs out of height. Extra ports collapse into "+N".
+    private let maxPortRows = 4
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            HStack(spacing: 6) {
-                Image(systemName: "bolt.fill")
-                    .foregroundStyle(.yellow)
-                Text(String(localized: "Power Monitor", bundle: _coreLocalizedBundle))
-                    .font(.headline)
-                Spacer()
-            }
-            .padding(.bottom, 8)
+            WidgetHeader(icon: "bolt.fill", title: String(localized: "Power Monitor", bundle: _coreLocalizedBundle))
+                .padding(.bottom, WidgetMetrics.s)
 
-            HStack(spacing: 10) {
-                Image(systemName: power.isDesktopMac ? "desktopcomputer" : "battery.100")
-                    .font(.title3)
-                    .foregroundStyle(statusColor)
-                    .frame(width: 24)
-                VStack(alignment: .leading, spacing: 2) {
-                    if power.isDesktopMac {
-                        Text(String(localized: "Power connected", bundle: _coreLocalizedBundle))
-                            .font(.callout)
-                            .fontWeight(.semibold)
-                    } else if let pct = power.batteryPercent {
-                        Text("\(pct)%")
-                            .font(.system(.title2, design: .rounded, weight: .bold))
-                    }
-                    Text(statusLabel)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+            // Battery anchor row.
+            powerRow(accent: power.chargeColor, icon: power.batteryIcon, iconColor: power.chargeColor) {
+                if power.isDesktopMac {
+                    Text(String(localized: "Power connected", bundle: _coreLocalizedBundle))
+                        .font(.callout)
+                        .fontWeight(.semibold)
+                } else if let pct = power.batteryPercent {
+                    Text("\(pct)%")
+                        .font(.system(.title2, design: .rounded, weight: .bold))
+                        .monospacedDigit()
                 }
-                Spacer()
-            }
+                Text(power.statusLabel)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            } trailing: { EmptyView() }
 
             if let watts = power.adapterWatts {
-                Divider().padding(.vertical, 4)
-                HStack(spacing: 10) {
-                    Image(systemName: "powerplug.portrait.fill")
-                        .font(.title3)
-                        .foregroundStyle(.yellow)
-                        .frame(width: 24)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(String(localized: "\(watts)W charger", bundle: _coreLocalizedBundle))
-                            .font(.callout)
-                            .fontWeight(.semibold)
-                        if let desc = power.adapterDescription {
-                            Text(desc)
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
+                Divider().padding(.vertical, WidgetMetrics.xs)
+                powerRow(accent: .orange, icon: "powerplug.portrait.fill", iconColor: .orange) {
+                    Text(String(localized: "Charger", bundle: _coreLocalizedBundle))
+                        .font(.callout)
+                        .fontWeight(.semibold)
+                    if let desc = power.prettyAdapterDescription {
+                        Text(desc)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
                     }
-                    Spacer()
+                } trailing: {
+                    PowerPill(watts: watts)
                 }
             }
 
             if power.recentSystemPower.count >= 2 {
-                Divider().padding(.vertical, 4)
-                HStack(spacing: 10) {
-                    Image(systemName: "chart.xyaxis.line")
-                        .font(.title3)
-                        .foregroundStyle(.orange)
-                        .frame(width: 24)
-                    VStack(alignment: .leading, spacing: 2) {
-                        if let sysW = power.systemPowerInWatts {
-                            let formatted = String(format: "%.1f", sysW)
-                            let systemDrawFormat = String(localized: "%@W system draw", bundle: _coreLocalizedBundle)
-                            Text(String(format: systemDrawFormat, formatted))
-                                .font(.callout)
-                                .fontWeight(.semibold)
-                        }
-                        PowerSparkline(samples: power.recentSystemPower, color: .orange)
-                            .frame(height: 24)
+                Divider().padding(.vertical, WidgetMetrics.xs)
+                powerRow(accent: .orange, icon: "chart.xyaxis.line", iconColor: .orange) {
+                    Text(String(localized: "System draw", bundle: _coreLocalizedBundle))
+                        .font(.callout)
+                        .fontWeight(.semibold)
+                    PowerSparkline(samples: power.recentSystemPower, color: .orange)
+                        .frame(height: 18)
+                } trailing: {
+                    if let sysW = power.systemPowerInWatts {
+                        Pill(text: wattText(sysW), color: .orange)
                     }
-                    Spacer(minLength: 0)
                 }
             }
 
             if let portWatts = power.perPortWatts, !portWatts.isEmpty {
-                Divider().padding(.vertical, 4)
-                ForEach(portWatts, id: \.portKey) { portPower in
-                    HStack(spacing: 10) {
+                Divider().padding(.vertical, WidgetMetrics.xs)
+                // Highest-draw ports first, capped so a many-port desktop Mac
+                // doesn't overflow the widget; the rest collapse into "+N".
+                let sorted = portWatts.sorted { $0.watts > $1.watts }
+                let shown = sorted.prefix(maxPortRows)
+                ForEach(shown, id: \.portKey) { portPower in
+                    HStack(spacing: WidgetMetrics.s) {
+                        RoundedRectangle(cornerRadius: 1.5)
+                            .fill(.blue)
+                            .frame(width: 3)
                         Image(systemName: "cable.connector")
                             .font(.caption)
                             .foregroundStyle(.blue)
-                            .frame(width: 24)
+                            .frame(width: 22)
                         Text(portPower.portName)
                             .font(.caption)
                             .lineLimit(1)
-                        Spacer()
-                        let portFormatted = String(format: "%.1f", portPower.watts)
-                        Text("\(portFormatted)W")
-                            .font(.caption)
-                            .fontWeight(.semibold)
-                            .foregroundStyle(.secondary)
-                        if portPower.recentSamples.count >= 2 {
-                            PowerSparkline(samples: portPower.recentSamples, color: .blue)
-                                .frame(width: 40, height: 16)
-                        }
+                        Spacer(minLength: WidgetMetrics.s)
+                        Pill(text: wattText(portPower.watts), color: .blue, compact: true)
                     }
+                }
+                if sorted.count > shown.count {
+                    OverflowRow(count: sorted.count - shown.count)
+                        .padding(.leading, 25)  // align under the port names
                 }
             }
 
@@ -316,23 +303,29 @@ struct PowerLargeView: View {
         }
     }
 
-    private var statusLabel: String {
-        if power.isDesktopMac {
-            return power.adapterDescription ?? ""
+    /// Shared accent-bar row: colour bar, icon, a content block, trailing item.
+    @ViewBuilder
+    private func powerRow<Content: View, Trailing: View>(
+        accent: Color,
+        icon: String,
+        iconColor: Color,
+        @ViewBuilder content: () -> Content,
+        @ViewBuilder trailing: () -> Trailing
+    ) -> some View {
+        HStack(spacing: WidgetMetrics.s) {
+            RoundedRectangle(cornerRadius: 1.5)
+                .fill(accent)
+                .frame(width: 3)
+            Image(systemName: icon)
+                .font(.callout)
+                .foregroundStyle(iconColor)
+                .frame(width: 22)
+            VStack(alignment: .leading, spacing: WidgetMetrics.xxs) {
+                content()
+            }
+            Spacer(minLength: WidgetMetrics.s)
+            trailing()
         }
-        if power.fullyCharged {
-            return String(localized: "Battery full", bundle: _coreLocalizedBundle)
-        }
-        if power.isCharging {
-            return String(localized: "Charging", bundle: _coreLocalizedBundle)
-        }
-        return String(localized: "On battery", bundle: _coreLocalizedBundle)
-    }
-
-    private var statusColor: Color {
-        if power.fullyCharged { return .green }
-        if power.isCharging { return .yellow }
-        return .secondary
     }
 }
 
@@ -340,7 +333,7 @@ struct PowerLargeView: View {
 
 struct PowerEmptyStateView: View {
     var body: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: WidgetMetrics.s) {
             Image(systemName: "bolt.slash")
                 .font(.largeTitle)
                 .foregroundStyle(.secondary)
@@ -352,30 +345,4 @@ struct PowerEmptyStateView: View {
                 .multilineTextAlignment(.center)
         }
     }
-}
-
-// MARK: - Previews
-
-#Preview("Power Small", as: .systemSmall) {
-    PowerMonitorWidget()
-} timeline: {
-    PowerMonitorEntry.placeholder
-}
-
-#Preview("Power Medium", as: .systemMedium) {
-    PowerMonitorWidget()
-} timeline: {
-    PowerMonitorEntry.placeholder
-}
-
-#Preview("Power Large", as: .systemLarge) {
-    PowerMonitorWidget()
-} timeline: {
-    PowerMonitorEntry.placeholder
-}
-
-#Preview("Power Empty", as: .systemSmall) {
-    PowerMonitorWidget()
-} timeline: {
-    PowerMonitorEntry(date: Date(), snapshot: nil)
 }

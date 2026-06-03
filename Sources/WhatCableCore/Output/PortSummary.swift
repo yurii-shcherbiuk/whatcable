@@ -19,12 +19,16 @@ public struct PortSummary {
     public let headline: String
     public let subtitle: String
     public let bullets: [String]
+    /// Structured negotiated link speed for badges / JSON. Nil when there's no
+    /// active data link to badge (empty port, charge-only, display-only).
+    public let linkSpeed: LinkSpeed?
 
-    public init(status: Status, headline: String, subtitle: String, bullets: [String]) {
+    public init(status: Status, headline: String, subtitle: String, bullets: [String], linkSpeed: LinkSpeed? = nil) {
         self.status = status
         self.headline = headline
         self.subtitle = subtitle
         self.bullets = bullets
+        self.linkSpeed = linkSpeed
     }
 }
 
@@ -85,6 +89,7 @@ extension PortSummary {
             self.headline = String(localized: "Nothing connected", bundle: _coreLocalizedBundle)
             self.subtitle = String(localized: "Plug a cable into \(portLabel) to see what it can do.", bundle: _coreLocalizedBundle)
             self.bullets = []
+            self.linkSpeed = nil
             return
         }
 
@@ -507,6 +512,15 @@ extension PortSummary {
         }
 
         self.bullets = bullets
+        self.linkSpeed = resolveLinkSpeed(
+            hasTB: hasTB,
+            hasUSB3: hasUSB3,
+            hasUSB2: hasUSB2,
+            port: port,
+            devices: devices,
+            usb3Transports: usb3Transports,
+            switches: thunderboltSwitches
+        )
     }
 }
 
@@ -585,6 +599,99 @@ private func stepDownLabel(host: IOThunderboltPort, lastLeg: IOThunderboltPort) 
     let h = hostLabel.replacingOccurrences(of: "Up to", with: "up to")
     let l = lastLabel.replacingOccurrences(of: "Up to", with: "up to")
     return String(localized: "Last leg drops from \(h) to \(l)", bundle: _coreLocalizedBundle)
+}
+
+/// Build the structured link-speed badge from the same signals the speed
+/// bullets use, so the badge never disagrees with the prose. Returns nil when
+/// there's no active data link worth badging (display-only, charge-only,
+/// nothing connected). Thunderbolt / USB4 takes priority, then USB 3, then
+/// USB 2.
+private func resolveLinkSpeed(
+    hasTB: Bool,
+    hasUSB3: Bool,
+    hasUSB2: Bool,
+    port: AppleHPMInterface,
+    devices: [USBDevice],
+    usb3Transports: [USB3Transport],
+    switches: [IOThunderboltSwitch]
+) -> LinkSpeed? {
+    if hasTB {
+        // Use the host link's published full-link rate (40 or 80). When we
+        // can't match the switch graph for this port, leave the badge off
+        // rather than guess a rate.
+        guard let total = thunderboltTotalGbps(for: port, switches: switches) else {
+            return nil
+        }
+        if total >= 80 {
+            return LinkSpeed(tier: .tb80, badge: "80G")
+        }
+        return LinkSpeed(tier: .tb40, badge: "40G")
+    }
+    if hasUSB3 {
+        switch usb3Gbps(port: port, devices: devices, transports: usb3Transports) {
+        case 20: return LinkSpeed(tier: .usb20g, badge: "20G")
+        case 10: return LinkSpeed(tier: .usb10g, badge: "10G")
+        default: return LinkSpeed(tier: .usb5g, badge: "5G")  // SuperSpeed floor
+        }
+    }
+    if hasUSB2 {
+        return LinkSpeed(tier: .usb2, badge: "480M")
+    }
+    return nil
+}
+
+/// Published full-link Gb/s for the Thunderbolt host link on this port, or nil
+/// if we can't find the matching switch graph. Mirrors `thunderboltBullets`'s
+/// host-port lookup so the badge tracks the "Linked at ..." bullet.
+private func thunderboltTotalGbps(
+    for port: AppleHPMInterface,
+    switches: [IOThunderboltSwitch]
+) -> Double? {
+    guard !switches.isEmpty,
+          let socketID = ThunderboltTopology.socketID(for: port),
+          let root = ThunderboltTopology.hostRoot(forSocketID: socketID, in: switches),
+          let hostPort = ThunderboltTopology.activeDownstreamLanePort(root) else {
+        return nil
+    }
+    return hostPort.currentSpeed?.totalGbps
+}
+
+/// Negotiated USB 3 link in Gb/s (5, 10, or 20), using the same precedence as
+/// the speed bullet: directly-attached root device first (its `speedRaw`
+/// distinguishes 20 Gbps Gen 2x2), then the HPM transport's signaling
+/// generation, then a port-matched device. Falls back to the 5 Gbps
+/// SuperSpeed floor when nothing finer is available.
+private func usb3Gbps(
+    port: AppleHPMInterface,
+    devices: [USBDevice],
+    transports: [USB3Transport]
+) -> Int {
+    if let raw = USBDevice.rootSuperSpeed(in: devices)?.speedRaw {
+        return gbpsFromSpeedRaw(raw)
+    }
+    // `signaling == 0` is IOKit's "None" sentinel, not Gen 0. The speed bullet
+    // treats it as "no info" (USB3Transport.speedLabel returns nil) and falls
+    // through to a port-matched device, so the badge must do the same or it
+    // would read 5G where the bullet shows 10G/20G.
+    if let signaling = transports.first(where: { $0.portKey == port.portKey })?.signaling,
+       signaling != 0 {
+        // Signaling only encodes Gen 1 (1) / Gen 2 (2); 20 Gbps is only seen
+        // via a device's speedRaw above or below.
+        return signaling >= 2 ? 10 : 5
+    }
+    if let raw = USBDevice.portMatchedSuperSpeed(in: devices)?.speedRaw {
+        return gbpsFromSpeedRaw(raw)
+    }
+    return 5
+}
+
+/// USB device `speedRaw` to Gb/s: 3 = 5 Gbps, 4 = 10 Gbps, 5 = 20 Gbps.
+private func gbpsFromSpeedRaw(_ raw: UInt8) -> Int {
+    switch raw {
+    case 5: return 20
+    case 4: return 10
+    default: return 5
+    }
 }
 
 private func subtitleForCapabilities(usb3: Bool, dp: Bool, emarker: Bool) -> String {

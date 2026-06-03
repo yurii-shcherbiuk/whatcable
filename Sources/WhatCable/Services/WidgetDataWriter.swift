@@ -33,6 +33,7 @@ final class WidgetDataWriter {
     private var tbWatcher: IOIOThunderboltSwitchWatcher { WatcherHub.shared.tbWatcher }
     private var usb3Watcher: USB3TransportWatcher { WatcherHub.shared.usb3Watcher }
     private var trmWatcher: TRMTransportWatcher { WatcherHub.shared.trmWatcher }
+    private var displayWatcher: DisplayPortTransportWatcher { WatcherHub.shared.displayWatcher }
 
     private var cancellables = Set<AnyCancellable>()
     private var writeTask: Task<Void, Never>?
@@ -91,6 +92,11 @@ final class WidgetDataWriter {
             .store(in: &cancellables)
 
         WatcherHub.shared.trmWatcher.$cioCapabilities
+            .dropFirst()
+            .sink { [weak self] _ in self?.scheduleWrite() }
+            .store(in: &cancellables)
+
+        WatcherHub.shared.displayWatcher.$statuses
             .dropFirst()
             .sink { [weak self] _ in self?.scheduleWrite() }
             .store(in: &cancellables)
@@ -203,6 +209,21 @@ final class WidgetDataWriter {
                 }
             }
 
+            // Display detail: when a DisplayPort transport matches this port,
+            // read the live mode + monitor name. Both are cable-independent, so
+            // we pass `cable: nil` rather than recompute the e-marker. This is
+            // free-tier data (the CLI's `--json` already emits the same facts).
+            var displayMode: String?
+            var monitorName: String?
+            // Guard a non-nil port key first: without it, a keyless port would
+            // nil-match a keyless display status and wrongly borrow its mode.
+            if let key = port.portKey,
+               let dp = displayWatcher.statuses.first(where: { $0.status.portKey == key })?.status,
+               let diag = DisplayDiagnostic(dp: dp, cable: nil) {
+                displayMode = diag.facts.currentMode?.shortLabel
+                monitorName = diag.facts.monitorName
+            }
+
             return WidgetSnapshot.PortEntry(
                 id: port.id,
                 portName: port.portDescription ?? port.serviceName,
@@ -214,7 +235,10 @@ final class WidgetDataWriter {
                 deviceCount: devices.count,
                 recentPower: recentPower,
                 portKey: port.portKey,
-                chargerWatts: wattageSource.watts
+                chargerWatts: wattageSource.watts,
+                linkSpeed: summary.linkSpeed,
+                displayMode: displayMode,
+                monitorName: monitorName
             )
         }
 

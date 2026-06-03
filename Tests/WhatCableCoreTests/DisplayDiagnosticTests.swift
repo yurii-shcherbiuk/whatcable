@@ -66,6 +66,18 @@ struct DisplayDiagnosticTests {
         )
     }
 
+    // MARK: - Widget display path
+
+    @Test("Widget path: dp current mode surfaces as a short label")
+    func widgetPathSurfacesCurrentMode() throws {
+        // The widget builds DisplayDiagnostic(dp:cable:) and reads
+        // facts.currentMode?.shortLabel. This pins that path: a 5K 60Hz
+        // current mode flows through to the badge label, cable-independent.
+        let dp = makeDP(currentMode: DisplayCurrentMode(width: 5120, height: 2880, refreshHz: 60))
+        let diag = try #require(DisplayDiagnostic(dp: dp, cable: nil))
+        #expect(diag.facts.currentMode?.shortLabel == "5K 60Hz")
+    }
+
     // MARK: - Core verdicts
 
     @Test("4-lane HBR2 carries the G34w-10's 100Hz mode: fine")

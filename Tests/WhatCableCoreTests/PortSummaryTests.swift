@@ -805,6 +805,77 @@ struct PortSummaryTests {
         )
     }
 
+    // MARK: - Structured link-speed badge
+
+    @Test("Link badge: USB 2.0 reads 480M")
+    func linkBadgeUSB2() {
+        let port = makePort(connected: true, active: ["USB2"], supported: ["CC", "USB2"])
+        let summary = PortSummary(port: port)
+        #expect(summary.linkSpeed?.tier == .usb2)
+        #expect(summary.linkSpeed?.badge == "480M")
+    }
+
+    @Test("Link badge: USB3 with no precise data floors at 5G")
+    func linkBadgeUSB3Floor() {
+        let port = makePort(connected: true, active: ["USB3"], supported: ["CC", "USB3"])
+        let summary = PortSummary(port: port, usb3Transports: [])
+        #expect(summary.linkSpeed?.tier == .usb5g)
+        #expect(summary.linkSpeed?.badge == "5G")
+    }
+
+    @Test("Link badge: USB3 Gen 2 transport reads 10G")
+    func linkBadgeUSB3Gen2() {
+        let port = makePort(connected: true, active: ["USB3"], supported: ["CC", "USB3"])
+        let transport = USB3Transport(
+            id: 1, portKey: "2/1", signaling: 2,
+            signalingDescription: "Gen 2", dataRole: "host"
+        )
+        let summary = PortSummary(port: port, usb3Transports: [transport])
+        #expect(summary.linkSpeed?.tier == .usb10g)
+        #expect(summary.linkSpeed?.badge == "10G")
+    }
+
+    @Test("Link badge: absent when nothing connected")
+    func linkBadgeNoneWhenEmpty() {
+        let summary = PortSummary(port: makePort(connected: false))
+        #expect(summary.linkSpeed == nil)
+    }
+
+    @Test("Link badge: absent on charge-only (no active data link)")
+    func linkBadgeNoneOnChargeOnly() {
+        let port = makePort(connected: true, active: [], supported: ["CC", "USB2"])
+        let summary = PortSummary(port: port, sources: [usbPD(maxW: 60, winningW: 60)])
+        #expect(summary.linkSpeed == nil)
+    }
+
+    @Test("Link badge: signaling 0 falls through to port-matched device, not 5G")
+    func linkBadgeSignalingZeroUsesPortMatchedDevice() {
+        // `signaling == 0` is IOKit's "no info" sentinel (common on Apple
+        // Silicon front ports). The bullet skips the transport and uses the
+        // port-matched device's speed; the badge must agree, not floor at 5G.
+        let port = makePort(connected: true, active: ["USB3"], supported: ["CC", "USB3"])
+        let transport = USB3Transport(
+            id: 1, portKey: "2/1", signaling: 0,
+            signalingDescription: nil, dataRole: "host"
+        )
+        // Non-root (two non-zero locationID nibbles) so rootSuperSpeed is nil
+        // and the port-matched path is what resolves the speed.
+        let device = USBDevice(
+            id: 2, locationID: 0x0121_0000,
+            vendorID: 0x04E8, productID: 0x4001,
+            vendorName: "Samsung", productName: "PSSD T7",
+            serialNumber: nil, usbVersion: "3.2",
+            speedRaw: 4, busPowerMA: 900, currentMA: 896,
+            controllerPortName: "Port-USB-C@1",
+            rawProperties: [:]
+        )
+        let summary = PortSummary(port: port, devices: [device], usb3Transports: [transport])
+        #expect(summary.linkSpeed?.tier == .usb10g)
+        #expect(summary.linkSpeed?.badge == "10G")
+        // And the badge agrees with the prose bullet.
+        #expect(summary.bullets.contains { $0.contains("10 Gbps") })
+    }
+
     @Test("USB3 unknown signaling shows generic gen")
     func usb3UnknownSignalingShowsGenericGen() {
         // A signaling value we haven't seen before should still produce

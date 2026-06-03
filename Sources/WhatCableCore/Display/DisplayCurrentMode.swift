@@ -43,4 +43,28 @@ public struct DisplayCurrentMode: Codable, Sendable, Equatable, Hashable {
     public var label: String {
         "\(width) x \(height) @ \(Int(refreshHz.rounded()))Hz"
     }
+
+    /// Compact label for the desktop widget, e.g. "5K 60Hz", "4K 120Hz",
+    /// "1440p 144Hz". Falls back to raw "WIDTHxHEIGHT NHz" for resolutions we
+    /// don't have a friendly name for, so it never shows nothing. Common Mac
+    /// and external-monitor modes are named; the rest read as raw pixels.
+    public var shortLabel: String {
+        let hz = Int(refreshHz.rounded())
+        let res: String
+        switch (width, height) {
+        case (7680, 4320): res = "8K"
+        case (6016, 3384), (6144, 3456): res = "6K"
+        case (5120, 2880): res = "5K"
+        case (3840, 2160), (4096, 2160): res = "4K"
+        case (5120, 1440): res = "DUW 1440p"  // 49" super-ultrawide
+        case (3840, 1600), (3440, 1440): res = "UW 1440p"  // ultrawide
+        case (2560, 1440): res = "1440p"
+        case (2560, 1600): res = "1600p"
+        case (2560, 1080): res = "UW 1080p"  // 34" ultrawide
+        case (1920, 1200): res = "1200p"
+        case (1920, 1080): res = "1080p"
+        default: res = "\(width)x\(height)"
+        }
+        return "\(res) \(hz)Hz"
+    }
 }

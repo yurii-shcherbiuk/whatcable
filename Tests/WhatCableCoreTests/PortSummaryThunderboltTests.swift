@@ -113,6 +113,9 @@ struct PortSummaryThunderboltTests {
             summary.bullets.contains("Connected to ASUS-Display PA32QCV"),
             "expected single-hop device label, got: \(summary.bullets)"
         )
+        // USB4 / TB4 host link = 40 Gbps published headline → green tb40 badge.
+        #expect(summary.linkSpeed?.tier == .tb40)
+        #expect(summary.linkSpeed?.badge == "40G")
     }
 
     @Test("TB3 link produces TB3 bullet")
@@ -126,6 +129,12 @@ struct PortSummaryThunderboltTests {
 
         let summary = PortSummary(port: port, thunderboltSwitches: [host])
         #expect(summary.bullets.contains("Linked at up to 10 Gb/s × 2"))
+        // The badge uses the published TB3 headline rate (40 Gbps), the same
+        // figure DataLinkDiagnostic treats as the active TB rate and the real
+        // TS3 dock confirms (CableSpeed=3). The per-lane bullet is a separate
+        // representation; the badge intentionally shows the recognisable rate.
+        #expect(summary.linkSpeed?.tier == .tb40)
+        #expect(summary.linkSpeed?.badge == "40G")
     }
 
     // MARK: - Daisy-chain step-down (the headline UX)
@@ -222,6 +231,9 @@ struct PortSummaryThunderboltTests {
             summary.bullets.contains("Thunderbolt / USB4 link active"),
             "expected fallback bullet when no switch data; got: \(summary.bullets)"
         )
+        // Without a matched switch graph we can't read the rate, so leave the
+        // badge off rather than guess.
+        #expect(summary.linkSpeed == nil)
     }
 
     // MARK: - TB5 confirmed (issue #52: M5 Pro + UGreen JHL9580 dock)
@@ -243,6 +255,9 @@ struct PortSummaryThunderboltTests {
             summary.bullets.contains { $0.contains("Unknown generation") } == false,
             "TB5 should no longer be hedged; got: \(summary.bullets)"
         )
+        // TB5 published headline = 80 Gbps → green tb80 badge.
+        #expect(summary.linkSpeed?.tier == .tb80)
+        #expect(summary.linkSpeed?.badge == "80G")
     }
 
     // MARK: - Passive e-marker + active TB link (issue #111)
