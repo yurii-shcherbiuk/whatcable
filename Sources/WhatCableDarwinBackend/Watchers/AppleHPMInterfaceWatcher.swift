@@ -13,9 +13,17 @@ public final class AppleHPMInterfaceWatcher: ObservableObject {
     // ports — those have no physical connector and just confuse the UI.
     // The exact IOKit class for a USB-C port node varies by chip
     // generation. M3-era machines expose `AppleHPMInterfaceType10/11/12`;
-    // M1 and M2 expose `AppleTCControllerType10/11`; M4 Mac mini front
-    // USB-C ports can expose the physical port as `IOPort`; MacBook Neo
-    // (A-series) uses `AppleHPMInterfaceType18`. The
+    // M1 and M2 expose `AppleTCControllerType10/11`; MacBook Neo
+    // (A-series) uses `AppleHPMInterfaceType18`. Apple-silicon desktop
+    // front USB-C ports (Mac mini, Studio) are plain USB behind an
+    // internal hub with no port-controller node, so they never appear
+    // here regardless of class (see issue #291). `IOPort` is the shared
+    // superclass of these port nodes, kept as a defensive catch-all, not
+    // a front-port mechanism. It is probably redundant on M3+ (the HPM
+    // classes above are `IOPort` subclasses, already matched by name), but
+    // it is left in deliberately: dropping it is a behaviour change that
+    // could hide a USB-C port on hardware we haven't tested, for no proven
+    // gain. Revisit only if it ever pulls in noise. The
     // `PortTypeDescription` / `Port-` filter in `makePort` drops anything
     // that isn't a real physical port.
     nonisolated static let candidateClasses = [
