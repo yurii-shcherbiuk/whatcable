@@ -187,6 +187,7 @@ cat > "${CONTENTS_DIR}/Info.plist" <<PLIST
         <string>pt-BR</string>
         <string>ru</string>
         <string>tr</string>
+        <string>uk</string>
         <string>zh-Hans</string>
         <string>zh-Hant</string>
     </array>
