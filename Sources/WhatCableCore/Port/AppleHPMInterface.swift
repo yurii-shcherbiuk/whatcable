@@ -197,6 +197,23 @@ public struct AppleHPMInterface: Identifiable, Hashable {
         self.rawProperties = rawProperties
     }
 
+    // Keys that are internal join keys used to correlate data across IOKit
+    // subsystems. They are per-machine identity values and must never appear
+    // in user-facing output such as --raw or --json, because users paste that
+    // output into GitHub issues. The stored rawProperties is left intact so
+    // internal joins (e.g. HPMPortUUIDMap) continue to work; the redaction
+    // happens only at the output boundary via redactedRawProperties below.
+    private static let privateRawKeys: Set<String> = [
+        "ConnectionUUID",   // Per-connection opaque ID on IOAccessoryManager; no
+                            // diagnostic value, uniquely identifies the machine.
+    ]
+
+    /// rawProperties with internal identity keys removed. Use this in all
+    /// output paths (--raw, --json) instead of rawProperties directly.
+    public var redactedRawProperties: [String: String] {
+        rawProperties.filter { !Self.privateRawKeys.contains($0.key) }
+    }
+
     /// Decoded DisplayPort alt mode lane configuration, if DP is active.
     public var dpLaneConfig: DisplayPortLaneConfig? {
         // DisplayPort must actually be carried on this link to report a lane

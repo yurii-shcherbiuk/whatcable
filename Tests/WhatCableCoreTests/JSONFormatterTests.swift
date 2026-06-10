@@ -1083,4 +1083,43 @@ struct JSONFormatterTests {
         let displays = port["displays"] as? [[String: Any]] ?? []
         #expect(displays.count == 2, "both monitors should appear; got \(displays.count)")
     }
+
+    // MARK: - Private key redaction (DAR-148)
+
+    /// --json --raw must omit ConnectionUUID from rawProperties output but keep
+    /// legitimate keys like PortType intact.
+    @Test("--raw JSON output omits ConnectionUUID and retains VendorID")
+    func rawJSONOmitsConnectionUUID() throws {
+        let port = USBCPort(
+            id: 1, serviceName: "Port-USB-C@1",
+            className: "AppleHPMInterfaceType10",
+            portDescription: "Port-USB-C@1",
+            portTypeDescription: "USB-C",
+            portNumber: 1,
+            connectionActive: true,
+            activeCable: nil, opticalCable: nil, usbActive: nil,
+            superSpeedActive: nil, usbModeType: nil, usbConnectString: nil,
+            transportsSupported: ["CC", "USB2", "USB3"],
+            transportsActive: ["USB3"], transportsProvisioned: [],
+            plugOrientation: nil, plugEventCount: nil, connectionCount: nil,
+            overcurrentCount: nil, pinConfiguration: [:], powerCurrentLimits: [],
+            firmwareVersion: nil, bootFlagsHex: nil,
+            rawProperties: [
+                "ConnectionUUID": "04A093D7-43A3-471F-A901-4A58EB4F6FE0",
+                "PortType": "2",
+                "VendorID": "0x05AC",
+            ]
+        )
+
+        let json = try JSONFormatter.render(
+            ports: [port], sources: [], identities: [], showRaw: true
+        )
+        let obj = parse(json)
+        let portObj = (obj["ports"] as? [[String: Any]])?.first ?? [:]
+        let raw = try #require(portObj["rawProperties"] as? [String: Any])
+
+        #expect(raw["ConnectionUUID"] == nil, "ConnectionUUID must be redacted from JSON output")
+        #expect(raw["PortType"] as? String == "2", "PortType must appear in JSON output")
+        #expect(raw["VendorID"] as? String == "0x05AC", "VendorID must appear in JSON output")
+    }
 }

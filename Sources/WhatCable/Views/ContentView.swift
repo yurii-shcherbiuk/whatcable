@@ -912,10 +912,10 @@ struct AdvancedPortDetails: View {
             if let root = thunderboltRoot, !thunderboltTree.isEmpty {
                 ThunderboltFabricSection(root: root, nodes: thunderboltTree)
             }
-            let rawCount = port.rawProperties.count
+            let rawCount = port.redactedRawProperties.count
             DisclosureGroup(String(localized: "All raw IOKit properties (\(rawCount))", bundle: _appLocalizedBundle)) {
                 VStack(alignment: .leading, spacing: 2) {
-                    ForEach(port.rawProperties.sorted(by: { $0.key < $1.key }), id: \.key) { kv in
+                    ForEach(port.redactedRawProperties.sorted(by: { $0.key < $1.key }), id: \.key) { kv in
                         HStack(alignment: .top) {
                             Text(kv.key).scaledFont(.caption, design: .monospaced)
                                 .foregroundStyle(.secondary)

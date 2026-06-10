@@ -269,7 +269,7 @@ private struct PortDTO: Codable {
         let tree = USBDeviceNode.buildTree(from: usbDevices)
         self.devices = tree.isEmpty ? nil : tree.map { USBDeviceDTO(node: $0) }
 
-        self.rawProperties = showRaw ? port.rawProperties : nil
+        self.rawProperties = showRaw ? port.redactedRawProperties : nil
     }
 }
 

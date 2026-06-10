@@ -229,8 +229,8 @@ public enum TextFormatter {
             }
 
             out += "\n" + ANSI.wrap(ANSI.bold, String(localized: "Raw IOKit properties:", bundle: _coreLocalizedBundle)) + "\n"
-            for key in port.rawProperties.keys.sorted() {
-                let value = port.rawProperties[key] ?? ""
+            for key in port.redactedRawProperties.keys.sorted() {
+                let value = port.redactedRawProperties[key] ?? ""
                 out += "  " + ANSI.wrap(ANSI.gray, key) + " = \(value)\n"
             }
         }

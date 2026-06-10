@@ -349,4 +349,49 @@ struct USBCPortFromTests {
         )
         #expect(port.portKey == nil)
     }
+
+    // MARK: - Private key redaction (DAR-148)
+
+    /// redactedRawProperties must strip ConnectionUUID (an internal per-machine
+    /// join key that must never reach --raw or --json output) while keeping
+    /// legitimate diagnostic keys like PortType and ConnectionActive.
+    @Test("redactedRawProperties strips ConnectionUUID and keeps legitimate keys")
+    func redactedRawPropertiesStripsConnectionUUID() {
+        let port = USBCPort(
+            id: 1, serviceName: "Port-USB-C@1",
+            className: "AppleHPMInterfaceType10",
+            portDescription: "Port-USB-C@1",
+            portTypeDescription: "USB-C",
+            portNumber: 1,
+            connectionActive: true,
+            activeCable: nil, opticalCable: nil, usbActive: nil,
+            superSpeedActive: nil, usbModeType: nil, usbConnectString: nil,
+            transportsSupported: ["CC", "USB2", "USB3"],
+            transportsActive: ["USB3"], transportsProvisioned: [],
+            plugOrientation: nil, plugEventCount: nil, connectionCount: nil,
+            overcurrentCount: nil, pinConfiguration: [:], powerCurrentLimits: [],
+            firmwareVersion: nil, bootFlagsHex: nil,
+            rawProperties: [
+                "ConnectionUUID": "04A093D7-43A3-471F-A901-4A58EB4F6FE0",
+                "PortType": "2",
+                "ConnectionActive": "1",
+                "VendorID": "0x05AC",
+                "ProductID": "0x1234",
+            ]
+        )
+
+        let redacted = port.redactedRawProperties
+
+        // Private key must be gone.
+        #expect(redacted["ConnectionUUID"] == nil, "ConnectionUUID must be redacted")
+
+        // Legitimate keys must survive.
+        #expect(redacted["PortType"] == "2", "PortType must not be redacted")
+        #expect(redacted["ConnectionActive"] == "1", "ConnectionActive must not be redacted")
+        #expect(redacted["VendorID"] == "0x05AC", "VendorID must not be redacted")
+        #expect(redacted["ProductID"] == "0x1234", "ProductID must not be redacted")
+
+        // The stored rawProperties is untouched (internal joins still work).
+        #expect(port.rawProperties["ConnectionUUID"] != nil, "rawProperties must be unmodified")
+    }
 }

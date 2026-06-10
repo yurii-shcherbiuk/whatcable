@@ -312,4 +312,41 @@ struct TextFormatterTests {
         )
         #expect(output.contains("Cable trust signals") == false)
     }
+
+    // MARK: - Private key redaction (DAR-148)
+
+    /// --raw text output must not print ConnectionUUID but must print
+    /// legitimate keys like PortType.
+    @Test("--raw text output omits ConnectionUUID and retains PortType")
+    func rawTextOmitsConnectionUUID() {
+        let port = USBCPort(
+            id: 1, serviceName: "Port-USB-C@1",
+            className: "AppleHPMInterfaceType10",
+            portDescription: "Port-USB-C@1",
+            portTypeDescription: "USB-C",
+            portNumber: 1,
+            connectionActive: true,
+            activeCable: nil, opticalCable: nil, usbActive: nil,
+            superSpeedActive: nil, usbModeType: nil, usbConnectString: nil,
+            transportsSupported: ["CC", "USB2", "USB3"],
+            transportsActive: ["USB3"], transportsProvisioned: [],
+            plugOrientation: nil, plugEventCount: nil, connectionCount: nil,
+            overcurrentCount: nil, pinConfiguration: [:], powerCurrentLimits: [],
+            firmwareVersion: nil, bootFlagsHex: nil,
+            rawProperties: [
+                "ConnectionUUID": "04A093D7-43A3-471F-A901-4A58EB4F6FE0",
+                "PortType": "2",
+                "VendorID": "0x05AC",
+            ]
+        )
+
+        let output = TextFormatter.render(
+            ports: [port], sources: [], identities: [], showRaw: true
+        )
+
+        #expect(!output.contains("ConnectionUUID"), "ConnectionUUID must not appear in text output")
+        #expect(!output.contains("04A093D7"), "ConnectionUUID value must not appear in text output")
+        #expect(output.contains("PortType"), "PortType must appear in text output")
+        #expect(output.contains("VendorID"), "VendorID must appear in text output")
+    }
 }
