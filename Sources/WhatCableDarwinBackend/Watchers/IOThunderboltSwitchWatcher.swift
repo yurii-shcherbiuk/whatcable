@@ -187,6 +187,10 @@ public final class IOIOThunderboltSwitchWatcher: ObservableObject {
         }
 
         if raw.isEmpty {
+            // No switches present: release any lingering interest-notification
+            // handles and clear the published list.
+            for (_, n) in interestNotifications { IOObjectRelease(n) }
+            interestNotifications.removeAll()
             if !switches.isEmpty { switches = [] }
             return
         }
@@ -230,6 +234,19 @@ public final class IOIOThunderboltSwitchWatcher: ObservableObject {
             ) {
                 rebuilt.append(model)
                 registerInterest(for: entry.service, entryID: entry.entryID)
+            }
+        }
+
+        // Prune interest notifications for switch services that are no longer
+        // present in the registry. Only kIOMatchedNotification is registered
+        // (no terminated callback), so without this prune, stale io_object_t
+        // handles would accumulate across plug/unplug cycles without limit.
+        // Each handle is a Mach port reference and must be released explicitly.
+        // seenEntryIDs was built in the first-pass walk above and holds every
+        // entry ID still live in the registry, so it doubles as the prune key.
+        for entryID in interestNotifications.keys where !seenEntryIDs.contains(entryID) {
+            if let n = interestNotifications.removeValue(forKey: entryID) {
+                IOObjectRelease(n)
             }
         }
 

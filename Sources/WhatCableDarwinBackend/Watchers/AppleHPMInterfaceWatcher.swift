@@ -89,6 +89,8 @@ public final class AppleHPMInterfaceWatcher: ObservableObject {
     /// when refresh() is called speculatively after every device event.
     public func refresh() {
         var rebuilt: [AppleHPMInterface] = []
+        var liveEntryIDs: Set<UInt64> = []
+
         for cls in Self.candidateClasses {
             let matching = IOServiceMatching(cls)
             var iter: io_iterator_t = 0
@@ -97,6 +99,7 @@ public final class AppleHPMInterfaceWatcher: ObservableObject {
                     if let port = makePort(from: service),
                        !rebuilt.contains(where: { $0.id == port.id }) {
                         rebuilt.append(port)
+                        liveEntryIDs.insert(port.id)
                         registerInterest(for: service, entryID: port.id)
                     }
                     IOObjectRelease(service)
@@ -104,6 +107,18 @@ public final class AppleHPMInterfaceWatcher: ObservableObject {
                 IOObjectRelease(iter)
             }
         }
+
+        // Prune interest notifications for port services that are no longer
+        // present in the registry. Only kIOMatchedNotification is registered
+        // (no terminated callback), so without this prune, stale io_object_t
+        // handles would accumulate across plug/unplug cycles without limit.
+        // Each handle is a Mach port reference and must be released explicitly.
+        for entryID in interestNotifications.keys where !liveEntryIDs.contains(entryID) {
+            if let n = interestNotifications.removeValue(forKey: entryID) {
+                IOObjectRelease(n)
+            }
+        }
+
         rebuilt.sort { lhs, rhs in
             let lhsActive = lhs.connectionActive == true
             let rhsActive = rhs.connectionActive == true

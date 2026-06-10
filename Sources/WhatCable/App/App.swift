@@ -19,12 +19,6 @@ struct WhatCableApp: App {
 
     init() {
         bootstrapPlugins(registry: .shared)
-        let hooks = PluginRegistry.shared.launchHooks
-        if !hooks.isEmpty {
-            Task {
-                for hook in hooks { await hook() }
-            }
-        }
     }
 
     var body: some Scene {
@@ -102,6 +96,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, NSW
         WidgetDataWriter.shared.start()
         UpdateChecker.shared.start()
         log.notice("launch: subsystems started")
+
+        // Run launch hooks here, after all singletons have been started.
+        // Hooks registered by plugins may call into NotificationManager,
+        // WidgetDataWriter, UpdateChecker, or WatcherHub; running them in
+        // App.init() (before applicationDidFinishLaunching) meant those
+        // singletons were still in their private init and not yet started.
+        let launchHooks = PluginRegistry.shared.launchHooks
+        if !launchHooks.isEmpty {
+            Task { @MainActor in
+                for hook in launchHooks { await hook() }
+            }
+        }
 
         if AppSettings.shared.needsOnboarding {
             showWelcomeWindow()
