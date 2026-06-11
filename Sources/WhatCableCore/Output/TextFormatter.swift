@@ -10,6 +10,7 @@ public enum TextFormatter {
         thunderboltSwitches: [IOThunderboltSwitch] = [],
         isDesktopMac: Bool = false,
         batteryFullyCharged: Bool? = nil,
+        batteryIsCharging: Bool? = nil,
         federatedIdentities: [FederatedIdentity] = [],
         usb3Transports: [USB3Transport] = [],
         cioCapabilities: [CIOCableCapability] = [],
@@ -50,6 +51,7 @@ public enum TextFormatter {
                 cioCapability: cioCapabilities.first { $0.canonicallyMatches(port: port) },
                 chargerWattageSource: wattageSource,
                 batteryFullyCharged: batteryFullyCharged,
+                batteryIsCharging: batteryIsCharging,
                 usbDevices: port.matchingDevices(from: usbDevices),
                 displayPorts: displayPorts.filter { $0.canonicallyMatches(port: port) },
                 anotherPortActivelyCharging: port.portKey.map { key in chargingPortKeys.contains { $0 != key } } ?? false
@@ -70,6 +72,7 @@ public enum TextFormatter {
         cioCapability: CIOCableCapability? = nil,
         chargerWattageSource: ChargerWattageSource = .unknown,
         batteryFullyCharged: Bool? = nil,
+        batteryIsCharging: Bool? = nil,
         usbDevices: [USBDevice] = [],
         displayPorts: [IOPortTransportStateDisplayPort] = [],
         anotherPortActivelyCharging: Bool = false
@@ -85,6 +88,7 @@ public enum TextFormatter {
             cioCapability: cioCapability,
             chargerWattageSource: chargerWattageSource,
             batteryFullyCharged: batteryFullyCharged,
+            batteryIsCharging: batteryIsCharging,
             adapter: adapter
         )
         let label = port.portDescription ?? port.serviceName
@@ -106,7 +110,7 @@ public enum TextFormatter {
             }
         }
 
-        if let diag = ChargingDiagnostic(port: port, sources: sources, identities: identities, adapter: adapter, wattageSource: chargerWattageSource, batteryFullyCharged: batteryFullyCharged, anotherPortActivelyCharging: anotherPortActivelyCharging) {
+        if let diag = ChargingDiagnostic(port: port, sources: sources, identities: identities, adapter: adapter, wattageSource: chargerWattageSource, batteryFullyCharged: batteryFullyCharged, batteryIsCharging: batteryIsCharging, anotherPortActivelyCharging: anotherPortActivelyCharging) {
             let diagColor = diag.isWarning ? ANSI.yellow : ANSI.green
             out += "\n" + ANSI.wrap(ANSI.bold, String(localized: "Charging: ", bundle: _coreLocalizedBundle)) + ANSI.wrap(diagColor, diag.summary) + "\n"
             out += "  " + ANSI.wrap(ANSI.dim, diag.detail) + "\n"

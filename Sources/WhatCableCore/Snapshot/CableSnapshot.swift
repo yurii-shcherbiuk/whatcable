@@ -150,6 +150,11 @@ public struct CableSnapshot: Equatable {
     /// no battery is present, so consumers never claim "battery full" on a
     /// machine that has no battery.
     public let batteryFullyCharged: Bool?
+    /// AppleSmartBattery's IsCharging flag. `nil` on desktop Macs / when no
+    /// battery is present. `false` while a charger is connected but macOS has
+    /// paused charging (charge limit or Optimized Battery Charging), even
+    /// though FullyCharged is still false.
+    public let batteryIsCharging: Bool?
 
     public init(
         ports: [AppleHPMInterface],
@@ -165,7 +170,8 @@ public struct CableSnapshot: Equatable {
         cioCapabilities: [CIOCableCapability] = [],
         typeCPhys: [AppleTypeCPhy] = [],
         displayPorts: [IOPortTransportStateDisplayPort] = [],
-        batteryFullyCharged: Bool? = nil
+        batteryFullyCharged: Bool? = nil,
+        batteryIsCharging: Bool? = nil
     ) {
         self.ports = ports
         self.powerSources = powerSources
@@ -181,6 +187,7 @@ public struct CableSnapshot: Equatable {
         self.typeCPhys = typeCPhys
         self.displayPorts = displayPorts
         self.batteryFullyCharged = batteryFullyCharged
+        self.batteryIsCharging = batteryIsCharging
     }
 }
 

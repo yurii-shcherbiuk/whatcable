@@ -45,6 +45,7 @@ extension ChargingDiagnostic {
         adapter: AdapterInfo? = nil,
         wattageSource: ChargerWattageSource = .unknown,
         batteryFullyCharged: Bool? = nil,
+        batteryIsCharging: Bool? = nil,
         anotherPortActivelyCharging: Bool = false
     ) {
         guard let source = PowerSource.preferredChargingSource(in: sources) else {
@@ -108,6 +109,14 @@ extension ChargingDiagnostic {
                 // in the PortSummary subtitle, so the two don't repeat.
                 self.summary = String(localized: "Battery full, not charging", bundle: _coreLocalizedBundle)
                 self.detail = String(localized: "Charger and cable are fine. The Mac will draw up to \(n)W when it needs to.", bundle: _coreLocalizedBundle)
+            } else if batteryIsCharging == false {
+                // Charger is connected and negotiated a contract, but the
+                // battery is not accepting charge. macOS does this when a
+                // charge limit is active or Optimized Battery Charging has
+                // paused charging. FullyCharged is still false, so the
+                // battery-full branch above does not catch this.
+                self.summary = String(localized: "Plugged in, charging on hold", bundle: _coreLocalizedBundle)
+                self.detail = String(localized: "Charger and cable are fine. macOS has paused charging for now, usually a battery charge limit or Optimized Battery Charging. The Mac still draws power from the charger.", bundle: _coreLocalizedBundle)
             } else {
                 self.summary = String(localized: "Charging well at \(n)W", bundle: _coreLocalizedBundle)
                 self.detail = String(localized: "Charger and cable are well-matched.", bundle: _coreLocalizedBundle)

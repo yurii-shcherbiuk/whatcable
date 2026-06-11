@@ -181,6 +181,7 @@ final class WidgetDataWriter {
     private func buildSnapshot() -> WidgetSnapshot {
         let batteryResult = AppleSmartBatteryReader.read()
         let batteryFull = batteryResult.battery?.fullyCharged
+        let batteryCharging = batteryResult.battery?.isCharging
         let adapter = SystemPower.currentAdapter()
         let activePortCount = portWatcher.ports.filter { $0.connectionActive == true }.count
 
@@ -205,7 +206,8 @@ final class WidgetDataWriter {
                 usb3Transports: usb3Watcher.transports(for: port),
                 cioCapability: trmWatcher.cioCapabilities.first { $0.canonicallyMatches(port: port) },
                 isConnectedOverride: isLive,
-                batteryFullyCharged: batteryFull
+                batteryFullyCharged: batteryFull,
+                batteryIsCharging: batteryCharging
             )
 
             let status = WidgetSnapshot.Status(from: summary.status)

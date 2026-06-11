@@ -97,6 +97,13 @@ public enum SystemPower {
     public static func batteryFullyCharged() -> Bool? {
         AppleSmartBatteryReader.read().battery?.fullyCharged
     }
+
+    /// AppleSmartBattery's IsCharging flag. `nil` on desktop Macs / when no
+    /// battery is present. `false` while a charger is connected but macOS
+    /// has paused charging (charge limit or Optimized Battery Charging).
+    public static func batteryIsCharging() -> Bool? {
+        AppleSmartBatteryReader.read().battery?.isCharging
+    }
 }
 
 extension ChargingDiagnostic {

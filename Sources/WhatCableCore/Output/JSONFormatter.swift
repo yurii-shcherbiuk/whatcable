@@ -10,6 +10,7 @@ public enum JSONFormatter {
         thunderboltSwitches: [IOThunderboltSwitch] = [],
         isDesktopMac: Bool = false,
         batteryFullyCharged: Bool? = nil,
+        batteryIsCharging: Bool? = nil,
         federatedIdentities: [FederatedIdentity] = [],
         usb3Transports: [USB3Transport] = [],
         trmTransports: [TRMTransport] = [],
@@ -59,6 +60,7 @@ public enum JSONFormatter {
                     cioCapability: cioCapabilities.first { $0.canonicallyMatches(port: port) },
                     chargerWattageSource: wattageSource,
                     batteryFullyCharged: batteryFullyCharged,
+                    batteryIsCharging: batteryIsCharging,
                     usbDevices: port.matchingDevices(from: usbDevices),
                     displayPorts: displayPorts.filter { $0.canonicallyMatches(port: port) },
                     anotherPortActivelyCharging: anotherPortActivelyCharging
@@ -151,6 +153,7 @@ private struct PortDTO: Codable {
         cioCapability: CIOCableCapability? = nil,
         chargerWattageSource: ChargerWattageSource = .unknown,
         batteryFullyCharged: Bool? = nil,
+        batteryIsCharging: Bool? = nil,
         usbDevices: [USBDevice] = [],
         displayPorts: [IOPortTransportStateDisplayPort] = [],
         anotherPortActivelyCharging: Bool = false
@@ -172,6 +175,7 @@ private struct PortDTO: Codable {
             cioCapability: cioCapability,
             chargerWattageSource: chargerWattageSource,
             batteryFullyCharged: batteryFullyCharged,
+            batteryIsCharging: batteryIsCharging,
             adapter: adapter
         )
         self.status = String(describing: summary.status)
@@ -225,7 +229,7 @@ private struct PortDTO: Codable {
 
         self.device = partner.map { DeviceDTO(identity: $0) }
 
-        self.charging = ChargingDiagnostic(port: port, sources: sources, identities: identities, adapter: adapter, wattageSource: chargerWattageSource, batteryFullyCharged: batteryFullyCharged, anotherPortActivelyCharging: anotherPortActivelyCharging)
+        self.charging = ChargingDiagnostic(port: port, sources: sources, identities: identities, adapter: adapter, wattageSource: chargerWattageSource, batteryFullyCharged: batteryFullyCharged, batteryIsCharging: batteryIsCharging, anotherPortActivelyCharging: anotherPortActivelyCharging)
             .map { ChargingDTO(diagnostic: $0) }
 
         let dataLinkDiag = DataLinkDiagnostic(

@@ -53,6 +53,7 @@ extension PortSummary {
         isConnectedOverride: Bool? = nil,
         chargerWattageSource: ChargerWattageSource = .unknown,
         batteryFullyCharged: Bool? = nil,
+        batteryIsCharging: Bool? = nil,
         adapter: AdapterInfo? = nil
     ) {
         let connected = isConnectedOverride ?? (port.connectionActive == true)
@@ -518,6 +519,19 @@ extension PortSummary {
             // so the subtitle here would just repeat it. Left empty; the
             // render sites skip an empty subtitle.
             self.subtitle = ""
+        } else if chargingSource != nil, batteryIsCharging == false {
+            // Charger is connected and negotiated a contract, but macOS has
+            // paused charging (charge limit or Optimized Battery Charging).
+            // FullyCharged is false so the battery-full branch above didn't
+            // fire. Show "Plugged in" rather than "Charging" because the
+            // battery is not actually gaining charge right now.
+            self.status = .charging
+            if let w = chargerW {
+                self.headline = String(localized: "Plugged in · \(w)W charger", bundle: _coreLocalizedBundle) + cableLimitSuffix
+            } else {
+                self.headline = String(localized: "Plugged in", bundle: _coreLocalizedBundle) + cableLimitSuffix
+            }
+            self.subtitle = String(localized: "Power is flowing. No data connection.", bundle: _coreLocalizedBundle)
         } else if chargingSource != nil {
             self.status = .charging
             if let w = chargerW {
@@ -541,6 +555,12 @@ extension PortSummary {
                 // so the subtitle here would just repeat it. Left empty; the
                 // render sites skip an empty subtitle.
                 self.subtitle = ""
+            } else if batteryIsCharging == false {
+                // Same as the live-contract on-hold branch but we only have
+                // the system adapter wattage, not a per-port negotiated value.
+                self.status = .charging
+                self.headline = String(localized: "Plugged in · \(w)W charger", bundle: _coreLocalizedBundle) + cableLimitSuffix
+                self.subtitle = String(localized: "Power is flowing. No data connection.", bundle: _coreLocalizedBundle)
             } else {
                 self.status = .charging
                 self.headline = String(localized: "Charging · \(w)W charger", bundle: _coreLocalizedBundle) + cableLimitSuffix

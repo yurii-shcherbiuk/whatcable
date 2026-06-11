@@ -468,3 +468,9 @@
 
 /* Active-layout contradiction note (DAR-30) - placeholder, see en.lproj */
 "E-marker reports passive, but carries active-cable structure (may be a mis-programmed e-marker)" = "E-marker reports passive, but carries active-cable structure (may be a mis-programmed e-marker)";
+
+"Plugged in, charging on hold" = "Conectado, carregamento em espera";
+"Charger and cable are fine. macOS has paused charging for now, usually a battery charge limit or Optimized Battery Charging. The Mac still draws power from the charger." = "O carregador e o cabo estão bem. O macOS pausou o carregamento por enquanto, geralmente por um limite de carga da bateria ou pelo Carregamento Otimizado da Bateria. O Mac ainda recebe energia do carregador.";
+"Plugged in · %lldW charger" = "Conectado · carregador de %lldW";
+"Plugged in" = "Conectado";
+"Charging on hold (charge limit or Optimized Battery Charging)" = "Carregamento em espera (limite de carga ou Carregamento Otimizado da Bateria)";

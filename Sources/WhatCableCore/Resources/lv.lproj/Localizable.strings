@@ -468,3 +468,9 @@
 
 /* Active-layout contradiction note (DAR-30) - placeholder, see en.lproj */
 "E-marker reports passive, but carries active-cable structure (may be a mis-programmed e-marker)" = "E-marker reports passive, but carries active-cable structure (may be a mis-programmed e-marker)";
+
+"Plugged in, charging on hold" = "Pievienots, uzlāde apturēta";
+"Charger and cable are fine. macOS has paused charging for now, usually a battery charge limit or Optimized Battery Charging. The Mac still draws power from the charger." = "Lādētājs un kabelis ir kārtībā. macOS pašlaik ir apturējis uzlādi, parasti akumulatora uzlādes ierobežojuma vai optimizētas akumulatora uzlādes dēļ. Mac joprojām saņem strāvu no lādētāja.";
+"Plugged in · %lldW charger" = "Pievienots · %lldW lādētājs";
+"Plugged in" = "Pievienots";
+"Charging on hold (charge limit or Optimized Battery Charging)" = "Uzlāde apturēta (uzlādes ierobežojums vai optimizēta uzlāde)";

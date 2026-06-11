@@ -71,7 +71,8 @@ public final class DarwinSnapshotProvider: CableSnapshotProvider, @unchecked Sen
                 // statuses are enriched with the live CoreGraphics mode at the
                 // watcher source now (DAR-159), so no enrich is needed here.
                 displayPorts: displayWatcher.statuses.map(\.status),
-                batteryFullyCharged: battery.battery?.fullyCharged
+                batteryFullyCharged: battery.battery?.fullyCharged,
+                batteryIsCharging: battery.battery?.isCharging
             )
             DarwinSnapshotProvider.logChargingSignals(snap)
             return snap

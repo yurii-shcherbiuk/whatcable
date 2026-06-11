@@ -354,6 +354,11 @@
 "The link is capable of %@, but macOS is blocking data until you approve the accessory. Click Allow on the connection prompt, or check System Settings > Privacy & Security > Allow accessories to connect, then replug." = "The link is capable of %@, but macOS is blocking data until you approve the accessory. Click Allow on the connection prompt, or check System Settings > Privacy & Security > Allow accessories to connect, then replug.";
 "Battery full, not charging" = "Battery full, not charging";
 "Charger and cable are fine. The Mac will draw up to %lldW when it needs to." = "Charger and cable are fine. The Mac will draw up to %lldW when it needs to.";
+"Plugged in, charging on hold" = "Plugged in, charging on hold";
+"Charger and cable are fine. macOS has paused charging for now, usually a battery charge limit or Optimized Battery Charging. The Mac still draws power from the charger." = "Charger and cable are fine. macOS has paused charging for now, usually a battery charge limit or Optimized Battery Charging. The Mac still draws power from the charger.";
+"Plugged in · %lldW charger" = "Plugged in · %lldW charger";
+"Plugged in" = "Plugged in";
+"Charging on hold (charge limit or Optimized Battery Charging)" = "Charging on hold (charge limit or Optimized Battery Charging)";
 "Negotiation Diagnostics" = "Negotiation Diagnostics";
 "What each link can do, and where the bottleneck is." = "What each link can do, and where the bottleneck is.";
 "No Connections" = "No Connections";

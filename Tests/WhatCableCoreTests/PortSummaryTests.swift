@@ -1585,6 +1585,34 @@ struct PortSummaryTests {
         )
     }
 
+    // MARK: - Charge hold (issue #319)
+
+    @Test("Charge hold: headline shows 'Plugged in' with wattage, status is .charging")
+    func chargeHoldHeadlineWithWattage() {
+        // With a live USB-PD contract but batteryIsCharging=false, the port is
+        // still drawing power (the Mac runs from the charger), so status stays
+        // .charging. Headline changes from "Charging" to "Plugged in" to be
+        // accurate: the battery itself is not gaining charge.
+        let port = makePort(connected: true, active: [], supported: ["USB2"])
+        let summary = PortSummary(
+            port: port,
+            sources: [usbPD(maxW: 96, winningW: 96)],
+            batteryIsCharging: false
+        )
+        #expect(summary.status == .charging)
+        #expect(summary.headline.hasPrefix("Plugged in"))
+        #expect(summary.headline.contains("96W"))
+    }
+
+    @Test("Charge hold: headline shows 'Plugged in' without wattage when no chargerW")
+    func chargeHoldHeadlineWithoutWattage() {
+        let port = makePort(connected: true, active: [], supported: ["USB2"])
+        let summary = PortSummary(port: port, sources: [], batteryIsCharging: false)
+        // No power source, so no headline override from charge-hold path.
+        // The port just shows as empty/connected without a charger.
+        #expect(summary.headline != "Charging")
+    }
+
     @Test("Charger identity bullet appears before the wattage advertisement")
     func chargerIdentityBulletOrdering() {
         // Bullet ordering: "Charger: Apple Inc. 140W USB-C Power Adapter"

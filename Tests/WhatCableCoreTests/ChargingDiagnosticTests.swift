@@ -599,4 +599,49 @@ struct ChargingDiagnosticTests {
         #expect(PowerSource.hasLiveChargingContract(in: [usbPDNoContract(maxW: 60)]) == false)
         #expect(PowerSource.hasLiveChargingContract(in: []) == false)
     }
+
+    // MARK: - Charge hold (issue #319)
+
+    @Test("Charge hold: batteryIsCharging=false shows on-hold summary, not a warning")
+    func chargeHoldIsNotAWarning() {
+        // batteryIsCharging=false with a live contract is the charge-hold state:
+        // macOS has a charge limit or OBC active. The bottleneck stays .fine,
+        // so it must NOT be flagged as a warning.
+        let diag = ChargingDiagnostic(
+            port: port,
+            sources: [usbPD(maxW: 96, winningW: 96)],
+            identities: [cableIdentity(watts: 100)],
+            batteryIsCharging: false
+        )
+        #expect(diag != nil)
+        #expect(diag!.isWarning == false)
+        #expect(diag!.summary == "Plugged in, charging on hold")
+    }
+
+    @Test("Charge hold: batteryFullyCharged=true takes precedence over batteryIsCharging=false")
+    func batteryFullyChargedTakesPrecedenceOverChargeHold() {
+        // When the battery is fully charged, that message wins even if IsCharging is also false.
+        let diag = ChargingDiagnostic(
+            port: port,
+            sources: [usbPD(maxW: 96, winningW: 96)],
+            identities: [cableIdentity(watts: 100)],
+            batteryFullyCharged: true,
+            batteryIsCharging: false
+        )
+        #expect(diag != nil)
+        #expect(diag!.summary == "Battery full, not charging")
+    }
+
+    @Test("Charge hold: batteryIsCharging=nil keeps existing charging-well behaviour")
+    func chargeHoldNilKeepsChargingWell() {
+        // When batteryIsCharging is nil (desktop or unknown), summary stays "Charging well".
+        let diag = ChargingDiagnostic(
+            port: port,
+            sources: [usbPD(maxW: 96, winningW: 96)],
+            identities: [cableIdentity(watts: 100)],
+            batteryIsCharging: nil
+        )
+        #expect(diag != nil)
+        #expect(diag!.summary.contains("Charging well"))
+    }
 }
