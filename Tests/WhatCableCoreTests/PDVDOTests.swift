@@ -672,6 +672,130 @@ struct PDVDOTests {
         #expect(active.activeCableVDO2 == nil)
     }
 
+    // MARK: - SOP'' Controller Present / Active Layout Contradiction (DAR-30)
+
+    @Test("Passive cable with bit 3 clear: sopDoubleControllerPresent is false")
+    func passiveCableNoBit3_sopDoubleControllerPresentFalse() {
+        // Normal passive cable. Bit 3 is in the Reserved [4:3] region and
+        // must be zero per Table 6.42. Confirm we read it correctly as false.
+        let vdo: UInt32 = 0b011 | UInt32(2 << 5) | Self.validLatency
+        let cable = PDVDO.decodeCableVDO(vdo, isActive: false)
+        #expect(!cable.sopDoubleControllerPresent)
+        #expect(cable.decodeWarnings.isEmpty)
+    }
+
+    @Test("Passive cable with bit 3 set: sopDoubleControllerPresent is true")
+    func passiveCableBit3Set_sopDoubleControllerPresentTrue() {
+        // Bit 3 set on a passive-layout decode. This is the CalDigit-style
+        // contradiction: bit [3] is Reserved in the passive layout and should
+        // be zero; it is "SOP'' Controller Present" in the active layout.
+        // We read it unconditionally so callers can detect the contradiction.
+        let vdo: UInt32 = 0b011 | UInt32(2 << 5) | Self.validLatency | (1 << 3)
+        let cable = PDVDO.decodeCableVDO(vdo, isActive: false)
+        #expect(cable.sopDoubleControllerPresent)
+        // Bit 3 being set does NOT itself generate a decode warning.
+        // The contradiction is surfaced via USBPDSOP.hasActiveLayoutContradiction,
+        // not as a CableVDO warning, because the full context (ID Header product
+        // type) is only visible at the USBPDSOP level.
+        #expect(cable.decodeWarnings.isEmpty)
+    }
+
+    @Test("Active cable with bit 3 set: sopDoubleControllerPresent is true, no contradiction")
+    func activeCableBit3Set_sopDoubleControllerPresentTrue_noContradiction() {
+        // An active cable correctly reporting active has SOP'' Controller Present
+        // set too. No contradiction since the ID Header already says active.
+        let vdo: UInt32 = UInt32(2 << 5) | Self.validLatency | Self.validActiveTermination | (1 << 3)
+        let cable = PDVDO.decodeCableVDO(vdo, isActive: true)
+        #expect(cable.sopDoubleControllerPresent)
+        #expect(cable.cableType == .active)
+        #expect(cable.decodeWarnings.isEmpty)
+    }
+
+    @Test("hasActiveLayoutContradiction: true for CalDigit-style passive mis-report")
+    func hasActiveLayoutContradiction_CalDigitStyle() {
+        // Synthetic fixture matching the CalDigit 2M TB4 cable from issue #111:
+        // ID Header says passive (Product Type = 3), but VDO[3] bit 3 is set.
+        // VDO3 = 0x3208485A: bit 3 = 1, termination = 0b01 (passive-valid).
+        let caldigitVDO3: UInt32 = 0x3208485A
+        let passiveIDHeader: UInt32 = (3 << 27) | UInt32(0x2B1D) // Product Type 3, VID Lintes
+        let sop = USBPDSOP(
+            id: 1,
+            endpoint: .sopPrime,
+            parentPortType: 2,
+            parentPortNumber: 2,
+            vendorID: 0x2B1D,
+            productID: 0x1901,
+            bcdDevice: 0x97,
+            vdos: [
+                passiveIDHeader,
+                0,                  // Cert Stat
+                0x19010097,         // Product VDO
+                caldigitVDO3,       // Cable VDO: passive layout, but bit 3 set
+            ],
+            specRevision: 3
+        )
+        #expect(sop.hasActiveLayoutContradiction)
+    }
+
+    @Test("hasActiveLayoutContradiction: false for normal passive cable (regression guard)")
+    func hasActiveLayoutContradiction_NormalPassive_False() {
+        // A genuinely passive cable with bit 3 clear must NOT be flagged.
+        // This is the regression guard: 154 out of 157 passive-reporting cables
+        // in the customer-probe corpus have bit 3 clear; this must remain zero.
+        let normalPassiveVDO3: UInt32 = 0b011 | UInt32(2 << 5) | Self.validLatency
+        let passiveIDHeader: UInt32 = (3 << 27) | UInt32(0x05AC)
+        let sop = USBPDSOP(
+            id: 1,
+            endpoint: .sopPrime,
+            parentPortType: 2,
+            parentPortNumber: 1,
+            vendorID: 0x05AC,
+            productID: 0,
+            bcdDevice: 0,
+            vdos: [passiveIDHeader, 0, 0, normalPassiveVDO3],
+            specRevision: 3
+        )
+        #expect(!sop.hasActiveLayoutContradiction)
+    }
+
+    @Test("hasActiveLayoutContradiction: false for correctly-reporting active cable")
+    func hasActiveLayoutContradiction_ActiveSelfReport_False() {
+        // An active cable that correctly self-reports as active is not a
+        // contradiction, even though it has bit 3 set.
+        let activeVDO3: UInt32 = UInt32(2 << 5) | Self.validLatency | Self.validActiveTermination | (1 << 3)
+        let activeIDHeader: UInt32 = (4 << 27) | UInt32(0x05AC)
+        let sop = USBPDSOP(
+            id: 1,
+            endpoint: .sopPrime,
+            parentPortType: 2,
+            parentPortNumber: 1,
+            vendorID: 0x05AC,
+            productID: 0,
+            bcdDevice: 0,
+            vdos: [activeIDHeader, 0, 0, activeVDO3],
+            specRevision: 3
+        )
+        #expect(!sop.hasActiveLayoutContradiction)
+    }
+
+    @Test("hasActiveLayoutContradiction: false when VDO[3] absent")
+    func hasActiveLayoutContradiction_NoVDO3_False() {
+        // No Cable VDO present (e.g. e-marker not read) means no contradiction.
+        let passiveIDHeader: UInt32 = (3 << 27) | UInt32(0x05AC)
+        let sop = USBPDSOP(
+            id: 1,
+            endpoint: .sopPrime,
+            parentPortType: 2,
+            parentPortNumber: 1,
+            vendorID: 0x05AC,
+            productID: 0,
+            bcdDevice: 0,
+            vdos: [passiveIDHeader, 0, 0],  // only 3 VDOs, no VDO[3]
+            specRevision: 3
+        )
+        #expect(!sop.hasActiveLayoutContradiction)
+    }
+
     // MARK: - Cert Stat VDO
 
     @Test("Cert stat present when non-zero")

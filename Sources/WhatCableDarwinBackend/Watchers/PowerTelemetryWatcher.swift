@@ -10,18 +10,13 @@ public final class PowerTelemetryWatcher: ObservableObject {
 
     private var continuation: AsyncStream<PowerMonitorSnapshot>.Continuation?
     private var pollTask: Task<Void, Never>?
-    private var regressionSamples: [RegressionSample] = []
+    private var accumulator = RegressionAccumulator()
     private var cachedPortKeys: [String]?
     // Desktop per-port power lives in the SMC, not IOKit. The reader is opened
     // lazily on the first desktop refresh; the UUID map ties each SMC channel
     // to its physical port. Both are unused on laptops (battery present).
     private let smcReader = SMCPowerReader()
     private var cachedUUIDMap: [String: String]?
-
-    private struct RegressionSample {
-        let voltageDrop: Double
-        let current: Double
-    }
 
     public init() {
         var continuation: AsyncStream<PowerMonitorSnapshot>.Continuation?
@@ -51,7 +46,7 @@ public final class PowerTelemetryWatcher: ObservableObject {
     public func stop() {
         pollTask?.cancel()
         pollTask = nil
-        regressionSamples.removeAll()
+        accumulator.reset()
         cachedPortKeys = nil
         cachedUUIDMap = nil
         smcReader.close()
@@ -139,7 +134,7 @@ public final class PowerTelemetryWatcher: ObservableObject {
             }
         }
 
-        appendRegressionSamples(from: portSamples)
+        accumulator.append(portSamples: portSamples)
         // Battery discharge, so the System Power card keeps tracking on battery.
         // Voltage is the pack voltage; power prefers the reported BatteryPower,
         // falling back to SystemLoad (the system's draw).
@@ -213,27 +208,8 @@ public final class PowerTelemetryWatcher: ObservableObject {
         )
     }
 
-    private func appendRegressionSamples(from portSamples: [PortPowerSample]) {
-        let usable = portSamples.compactMap { sample -> RegressionSample? in
-            guard sample.current > 0,
-                  sample.configuredVoltage > 0,
-                  sample.adapterVoltage > 0,
-                  sample.configuredVoltage >= sample.adapterVoltage else {
-                return nil
-            }
-            return RegressionSample(
-                voltageDrop: Double(sample.configuredVoltage - sample.adapterVoltage),
-                current: Double(sample.current)
-            )
-        }
-        regressionSamples.append(contentsOf: usable)
-        if regressionSamples.count > 120 {
-            regressionSamples.removeFirst(regressionSamples.count - 120)
-        }
-    }
-
     private func resistanceEstimate() -> CableResistanceEstimate? {
-        let samples = regressionSamples.filter { $0.current > 0 }
+        let samples = accumulator.samples.filter { $0.current > 0 }
         guard samples.count >= 10 else {
             return CableResistanceEstimate(
                 milliohms: 0,

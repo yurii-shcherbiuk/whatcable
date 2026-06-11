@@ -218,6 +218,14 @@ public enum PDVDO {
         /// Bit 17, "EPR Capable." When true, the cable claims to be safe
         /// for Extended Power Range operation (48V / 50V).
         public let eprCapable: Bool
+        /// Bit 3, "SOP'' Controller Present" in Active Cable VDO1 layout
+        /// (Table 6.43). This bit occupies the Reserved [4:3] region of the
+        /// Passive Cable VDO layout (Table 6.42), where the spec requires it
+        /// to be zero. A passive-reporting cable with this bit set carries a
+        /// structural contradiction: it is encoded as a field that only exists
+        /// in the active layout. Exposed here regardless of `cableType` so
+        /// callers can detect the contradiction. See `USBPDSOP.hasActiveLayoutContradiction`.
+        public let sopDoubleControllerPresent: Bool
         public let decodeWarnings: [DecodeWarning]
 
         public var maxVolts: Int {
@@ -265,6 +273,11 @@ public enum PDVDO {
         let cableTerminationBits = Int((vdo >> 11) & 0b11)
         let vdoVersionBits = Int((vdo >> 21) & 0b111)
         let eprCapable = (vdo >> 17) & 1 == 1
+        // Bit 3: "SOP'' Controller Present" in Active Cable VDO1 (Table 6.43).
+        // In Passive Cable VDO (Table 6.42), bits [4:3] are Reserved and must
+        // be zero. Extracting it here unconditionally lets callers detect when
+        // a passive-reporting cable uses a bit that only exists in the active layout.
+        let sopDoubleControllerPresent = (vdo >> 3) & 1 == 1
         var warnings: [DecodeWarning] = []
         if decodedSpeed == nil {
             warnings.append(.reservedSpeedEncoding(speedBits))
@@ -363,6 +376,7 @@ public enum PDVDO {
             vdoVersionEncoded: vdoVersionBits,
             cableTerminationEncoded: cableTerminationBits,
             eprCapable: eprCapable,
+            sopDoubleControllerPresent: sopDoubleControllerPresent,
             decodeWarnings: warnings
         )
     }

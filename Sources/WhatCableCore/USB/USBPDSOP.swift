@@ -92,6 +92,26 @@ public struct USBPDSOP: Identifiable, Hashable {
         return PDVDO.decodeActiveCableVDO2(vdos[4])
     }
 
+    /// True when the cable's ID Header self-reports as passive (Product Type = 3)
+    /// but VDO[3] bit 3 is set, which in the Active Cable VDO1 layout (Table 6.43)
+    /// means "SOP'' Controller Present." In the Passive Cable VDO layout (Table 6.42),
+    /// bits [4:3] are Reserved and the spec requires them to be zero. A genuine
+    /// passive cable cannot have this bit set, so its presence is a structural
+    /// contradiction: the cable is using a field that only exists in the active layout.
+    ///
+    /// This is the spec-grounded signal for the CalDigit-style bug reported in
+    /// issue #111, where a real active Thunderbolt 4 cable mis-programs its
+    /// ID Header as passive while leaving active-layout bits set in VDO[3].
+    ///
+    /// Always `false` for cables that self-report as active (no contradiction).
+    /// Always `false` when VDO[3] is absent.
+    public var hasActiveLayoutContradiction: Bool {
+        guard endpoint == .sopPrime || endpoint == .sopDoublePrime,
+              idHeader?.ufpProductType == .passiveCable,
+              let cv = cableVDO else { return false }
+        return cv.sopDoubleControllerPresent
+    }
+
     /// Human-readable PD spec revision (e.g. "PD 3.0"). The raw value is the
     /// IOKit `Specification Revision` property on the SOP / SOP' / SOP'' node,
     /// passed through untransformed. Per `research/iokit-data-sources.md` §7
