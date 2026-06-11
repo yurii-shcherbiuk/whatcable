@@ -28,12 +28,12 @@
 "Charger: %@" = "Charger: %@";
 "Charger: %@ %@" = "Charger: %1$@ %2$@";
 "Charger identified as %@" = "Charger identified as %@";
-"Charger and cable are well-matched." = "Charger and cable are well-matched.";
+"Charger and cable are well-matched. The Mac draws what it needs moment to moment, up to this limit." = "Charger and cable are well-matched. The Mac draws what it needs moment to moment, up to this limit.";
 "Charger can deliver up to %lldW, but this cable is only rated to carry %lldW. Replace the cable to charge faster." = "Charger can deliver up to %1$lldW, but this cable is only rated to carry %2$lldW. Replace the cable to charge faster.";
 "Charging" = "Charging";
 "Charging at %lldW (charger can do up to %lldW)" = "Charging at %1$lldW (charger can do up to %2$lldW)";
 "Charging only" = "Charging only";
-"Charging well at %lldW" = "Charging well at %lldW";
+"Charging well · up to %lldW" = "Charging well · up to %lldW";
 "Charging · %lldW charger" = "Charging · %lldW charger";
 "System reports charger at %lldW" = "System reports charger at %lldW";
 "Charging: " = "Charging: ";

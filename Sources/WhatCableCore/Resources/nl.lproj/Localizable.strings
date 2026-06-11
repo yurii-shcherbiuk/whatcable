@@ -28,12 +28,12 @@
 "Charger: %@" = "Oplader: %@";
 "Charger: %@ %@" = "Oplader: %1$@ %2$@";
 "Charger identified as %@" = "Oplader herkend als %@";
-"Charger and cable are well-matched." = "Oplader en kabel zijn goed op elkaar afgestemd.";
+"Charger and cable are well-matched. The Mac draws what it needs moment to moment, up to this limit." = "Oplader en kabel zijn goed op elkaar afgestemd. De Mac trekt wat hij op dat moment nodig heeft, tot aan dit maximum.";
 "Charger can deliver up to %lldW, but this cable is only rated to carry %lldW. Replace the cable to charge faster." = "Oplader kan tot %1$lldW leveren, maar deze kabel is slechts geschikt voor %2$lldW. Vervang de kabel om sneller op te laden.";
 "Charging" = "Opladen";
 "Charging at %lldW (charger can do up to %lldW)" = "Opladen op %1$lldW (oplader kan tot %2$lldW)";
 "Charging only" = "Alleen opladen";
-"Charging well at %lldW" = "Goed opladen op %lldW";
+"Charging well · up to %lldW" = "Goed opladen · tot %lldW";
 "Charging · %lldW charger" = "Opladen · %lldW oplader";
 "System reports charger at %lldW" = "Systeem meldt oplader op %lldW";
 "Charging: " = "Opladen: ";

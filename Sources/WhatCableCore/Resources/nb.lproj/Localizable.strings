@@ -28,12 +28,12 @@
 "Charger: %@" = "Lader: %@";
 "Charger: %@ %@" = "Lader: %1$@ %2$@";
 "Charger identified as %@" = "Lader identifisert som %@";
-"Charger and cable are well-matched." = "Lader og kabel passer godt sammen.";
+"Charger and cable are well-matched. The Mac draws what it needs moment to moment, up to this limit." = "Lader og kabel passer godt sammen. Mac-en trekker det den trenger til enhver tid, opp til denne grensen.";
 "Charger can deliver up to %lldW, but this cable is only rated to carry %lldW. Replace the cable to charge faster." = "Laderen kan levere opptil %1$lld W, men denne kabelen er bare dimensjonert for %2$lld W. Bytt kabel for raskere lading.";
 "Charging" = "Lading";
 "Charging at %lldW (charger can do up to %lldW)" = "Lader med %1$lld W (laderen kan levere opptil %2$lld W)";
 "Charging only" = "Kun lading";
-"Charging well at %lldW" = "God lading med %lld W";
+"Charging well · up to %lldW" = "God lading · opptil %lld W";
 "Charging · %lldW charger" = "Lading · %lld W-lader";
 "System reports charger at %lldW" = "Systemet rapporterer %lld W-lader";
 "Charging: " = "Lading: ";

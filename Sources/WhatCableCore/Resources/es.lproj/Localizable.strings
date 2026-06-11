@@ -28,12 +28,12 @@
 "Charger: %@" = "Cargador: %@";
 "Charger: %@ %@" = "Cargador: %1$@ %2$@";
 "Charger identified as %@" = "Cargador identificado como %@";
-"Charger and cable are well-matched." = "El cargador y el cable están bien emparejados.";
+"Charger and cable are well-matched. The Mac draws what it needs moment to moment, up to this limit." = "El cargador y el cable están bien emparejados. El Mac consume lo que necesita en cada momento, hasta este límite.";
 "Charger can deliver up to %lldW, but this cable is only rated to carry %lldW. Replace the cable to charge faster." = "El cargador puede entregar hasta %1$lld W, pero este cable solo soporta %2$lld W. Reemplaza el cable para cargar más rápido.";
 "Charging" = "Carga";
 "Charging at %lldW (charger can do up to %lldW)" = "Cargando a %1$lld W (el cargador puede entregar hasta %2$lld W)";
 "Charging only" = "Solo carga";
-"Charging well at %lldW" = "Buena carga a %lld W";
+"Charging well · up to %lldW" = "Buena carga · hasta %lld W";
 "Charging · %lldW charger" = "Carga · cargador de %lld W";
 "System reports charger at %lldW" = "El sistema indica un cargador de %lld W";
 "Charging: " = "Carga: ";

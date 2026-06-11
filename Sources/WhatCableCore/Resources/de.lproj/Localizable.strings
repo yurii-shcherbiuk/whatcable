@@ -28,12 +28,12 @@
 "Charger: %@" = "Ladegerät: %@";
 "Charger: %@ %@" = "Ladegerät: %1$@ %2$@";
 "Charger identified as %@" = "Ladegerät erkannt als %@";
-"Charger and cable are well-matched." = "Ladegerät und Kabel passen gut zusammen.";
+"Charger and cable are well-matched. The Mac draws what it needs moment to moment, up to this limit." = "Ladegerät und Kabel passen gut zusammen. Der Mac zieht so viel Strom, wie er gerade benötigt – bis zu diesem Limit.";
 "Charger can deliver up to %lldW, but this cable is only rated to carry %lldW. Replace the cable to charge faster." = "Das Ladegerät kann bis zu %1$lld W liefern, aber dieses Kabel ist nur für %2$lld W ausgelegt. Tausche das Kabel, um schneller zu laden.";
 "Charging" = "Laden";
 "Charging at %lldW (charger can do up to %lldW)" = "Laden mit %1$lld W (Ladegerät kann bis zu %2$lld W)";
 "Charging only" = "Nur Laden";
-"Charging well at %lldW" = "Gutes Laden mit %lld W";
+"Charging well · up to %lldW" = "Gutes Laden · bis zu %lld W";
 "Charging · %lldW charger" = "Laden · %lld-W-Ladegerät";
 "System reports charger at %lldW" = "System meldet Ladegerät mit %lld W";
 "Charging: " = "Laden: ";

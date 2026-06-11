@@ -28,12 +28,12 @@
 "Charger: %@" = "Լիցքավորիչ՝ %@";
 "Charger: %@ %@" = "Լիցքավորիչ՝ %1$@ %2$@";
 "Charger identified as %@" = "Լիցքավորիչը նույնացվել է որպես %@";
-"Charger and cable are well-matched." = "Լիցքավորիչը և մալուխը համապատասխանում են միմյանց:";
+"Charger and cable are well-matched. The Mac draws what it needs moment to moment, up to this limit." = "Լիցքավորիչը և մալուխը համապատասխանում են միմյանց: Mac-ը վերցնում է ուժաչափ ֆիփ-ֆոփ, ըստ անհրաժեշտության, մինչև այս սահմանը:";
 "Charger can deliver up to %lldW, but this cable is only rated to carry %lldW. Replace the cable to charge faster." = "Լիցքավորիչը կարող է ապահովել մինչև %1$lldW, սակայն այս մալուխը նախատեսված է միայն %2$lldW։ Փոխեք մալուխը ավելի արագ լիցքավորելու համար:";
 "Charging" = "Լիցքավորում";
 "Charging at %lldW (charger can do up to %lldW)" = "Լիցքավորումը՝ %1$lldW (լիցքավորիչի հնարավորությունը՝ մինչև %2$lldW)";
 "Charging only" = "Միայն լիցքավորում";
-"Charging well at %lldW" = "Լիցքավորվում է %lldW հզորությամբ";
+"Charging well · up to %lldW" = "Լիցքավորվում է · մինչև %lldW";
 "Charging · %lldW charger" = "Լիցքավորում · %lldW լիցքավորիչ";
 "System reports charger at %lldW" = "Համակարգը հաղորդում է %lldW լիցքավորիչ";
 "Charging: " = "Լիցքավորում՝";

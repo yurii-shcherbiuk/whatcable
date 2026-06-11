@@ -28,12 +28,12 @@
 "Charger: %@" = "चार्जर: %@";
 "Charger: %@ %@" = "चार्जर: %1$@ %2$@";
 "Charger identified as %@" = "चार्जर की पहचान %@ के रूप में हुई";
-"Charger and cable are well-matched." = "चार्जर और केबल अच्छी तरह मेल खाते हैं।";
+"Charger and cable are well-matched. The Mac draws what it needs moment to moment, up to this limit." = "चार्जर और केबल अच्छी तरह मेल खाते हैं। Mac इस सीमा तक, हर पल जितनी ज़रूरत हो उतनी बिजली लेता है।";
 "Charger can deliver up to %lldW, but this cable is only rated to carry %lldW. Replace the cable to charge faster." = "चार्जर अधिकतम %1$lld W दे सकता है, लेकिन यह केबल केवल %2$lld W तक रेटेड है। तेज़ चार्जिंग के लिए केबल बदलें।";
 "Charging" = "चार्जिंग";
 "Charging at %lldW (charger can do up to %lldW)" = "%1$lld W पर चार्ज हो रहा है (चार्जर अधिकतम %2$lld W दे सकता है)";
 "Charging only" = "केवल चार्जिंग";
-"Charging well at %lldW" = "%lld W पर अच्छी चार्जिंग";
+"Charging well · up to %lldW" = "अच्छी चार्जिंग · अधिकतम %lld W";
 "Charging · %lldW charger" = "चार्जिंग · %lld W चार्जर";
 "System reports charger at %lldW" = "सिस्टम के अनुसार चार्जर %lld W";
 "Charging: " = "चार्जिंग: ";

@@ -28,12 +28,12 @@
 "Charger: %@" = "Lādētājs: %@";
 "Charger: %@ %@" = "Lādētājs: %1$@ %2$@";
 "Charger identified as %@" = "Lādētājs identificēts kā %@";
-"Charger and cable are well-matched." = "Lādētājs un kabelis ir labi saderīgi.";
+"Charger and cable are well-matched. The Mac draws what it needs moment to moment, up to this limit." = "Lādētājs un kabelis ir labi saderīgi. Mac ņem tik daudz jaudas, cik nepieciešams katrā brīdī, līdz šim ierobežojumam.";
 "Charger can deliver up to %lldW, but this cable is only rated to carry %lldW. Replace the cable to charge faster." = "Lādētājs var nodrošināt līdz %1$lld W, bet šis kabelis ir novērtēts tikai %2$lld W. Nomainiet kabeli, lai uzlādētu ātrāk.";
 "Charging" = "Uzlāde";
 "Charging at %lldW (charger can do up to %lldW)" = "Uzlāde ar %1$lld W (lādētājs spēj līdz %2$lld W)";
 "Charging only" = "Tikai uzlāde";
-"Charging well at %lldW" = "Laba uzlāde ar %lld W";
+"Charging well · up to %lldW" = "Laba uzlāde · līdz %lld W";
 "Charging · %lldW charger" = "Uzlāde · %lld W lādētājs";
 "System reports charger at %lldW" = "Sistēma ziņo par %lld W lādētāju";
 "Charging: " = "Uzlāde: ";

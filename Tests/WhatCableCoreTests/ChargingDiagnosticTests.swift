@@ -211,7 +211,7 @@ struct ChargingDiagnosticTests {
             Issue.record("expected .fine, got \(String(describing: diag?.bottleneck))")
             return
         }
-        #expect(diag!.summary == "Charging well at 96W")
+        #expect(diag!.summary == "Charging well · up to 96W")
     }
 
     @Test("No cable e-marker, fine if matched")

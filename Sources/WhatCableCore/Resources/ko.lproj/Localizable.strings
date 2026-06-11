@@ -28,12 +28,12 @@
 "Charger: %@" = "충전기: %@";
 "Charger: %@ %@" = "충전기: %1$@ %2$@";
 "Charger identified as %@" = "충전기가 %@(으)로 식별되었어요.";
-"Charger and cable are well-matched." = "충전기와 케이블이 잘 맞아요.";
+"Charger and cable are well-matched. The Mac draws what it needs moment to moment, up to this limit." = "충전기와 케이블이 잘 맞아요. Mac은 이 한도 내에서 그때그때 필요한 만큼 전력을 가져갑니다.";
 "Charger can deliver up to %lldW, but this cable is only rated to carry %lldW. Replace the cable to charge faster." = "충전기는 최대 %1$lldW를 공급할 수 있지만, 이 케이블은 %2$lldW까지만 전달할 수 있어요. 더 빠르게 충전하려면 케이블을 교체하세요.";
 "Charging" = "충전 중";
 "Charging at %lldW (charger can do up to %lldW)" = "%1$lldW로 충전 중 (충전기 최대 %2$lldW)";
 "Charging only" = "충전 전용";
-"Charging well at %lldW" = "%lldW로 원활하게 충전 중";
+"Charging well · up to %lldW" = "원활하게 충전 중 · 최대 %lldW";
 "Charging · %lldW charger" = "충전 중 · %lldW 충전기";
 "System reports charger at %lldW" = "시스템에서 %lldW 충전기로 보고함";
 "Charging: " = "충전 중: ";

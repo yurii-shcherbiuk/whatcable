@@ -28,12 +28,12 @@
 "Charger: %@" = "充电器：%@";
 "Charger: %@ %@" = "充电器：%1$@ %2$@";
 "Charger identified as %@" = "充电器识别为 %@";
-"Charger and cable are well-matched." = "充电器和线缆匹配良好。";
+"Charger and cable are well-matched. The Mac draws what it needs moment to moment, up to this limit." = "充电器和线缆匹配良好。Mac 会根据实时需求取用电力，最高不超过此上限。";
 "Charger can deliver up to %lldW, but this cable is only rated to carry %lldW. Replace the cable to charge faster." = "充电器最高可提供 %1$lldW，但这条线缆额定只能承载 %2$lldW。更换线缆可以更快充电。";
 "Charging" = "正在充电";
 "Charging at %lldW (charger can do up to %lldW)" = "正在以 %1$lldW 充电（充电器最高可达 %2$lldW）";
 "Charging only" = "仅充电";
-"Charging well at %lldW" = "正在以 %lldW 正常充电";
+"Charging well · up to %lldW" = "正常充电 · 最高 %lldW";
 "Charging · %lldW charger" = "正在充电 · %lldW 充电器";
 "System reports charger at %lldW" = "系统报告充电器为 %lldW";
 "Charging: " = "充电：";

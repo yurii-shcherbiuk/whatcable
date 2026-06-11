@@ -28,12 +28,12 @@
 "Charger: %@" = "Зарядное устройство: %@";
 "Charger: %@ %@" = "Зарядное устройство: %1$@ %2$@";
 "Charger identified as %@" = "Зарядное устройство определено как %@";
-"Charger and cable are well-matched." = "Зарядное устройство и кабель хорошо согласованы.";
+"Charger and cable are well-matched. The Mac draws what it needs moment to moment, up to this limit." = "Зарядное устройство и кабель хорошо согласованы. Mac берёт столько мощности, сколько нужно в данный момент, но не выше этого предела.";
 "Charger can deliver up to %lldW, but this cable is only rated to carry %lldW. Replace the cable to charge faster." = "Зарядное устройство может отдавать до %1$lld Вт, но этот кабель рассчитан только на %2$lld Вт. Замените кабель для более быстрой зарядки.";
 "Charging" = "Зарядка";
 "Charging at %lldW (charger can do up to %lldW)" = "Зарядка %1$lld Вт (ЗУ может до %2$lld Вт)";
 "Charging only" = "Только зарядка";
-"Charging well at %lldW" = "Уверенная зарядка %lld Вт";
+"Charging well · up to %lldW" = "Уверенная зарядка · до %lld Вт";
 "Charging · %lldW charger" = "Зарядка · ЗУ %lld Вт";
 "System reports charger at %lldW" = "Система сообщает о ЗУ %lld Вт";
 "Charging: " = "Зарядка: ";

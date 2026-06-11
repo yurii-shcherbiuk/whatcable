@@ -28,12 +28,12 @@
 "Charger: %@" = "Şarj aleti: %@";
 "Charger: %@ %@" = "Şarj aleti: %1$@ %2$@";
 "Charger identified as %@" = "Şarj aleti %@ olarak tanımlandı";
-"Charger and cable are well-matched." = "Şarj aleti ve kablo birbirine uygun.";
+"Charger and cable are well-matched. The Mac draws what it needs moment to moment, up to this limit." = "Şarj aleti ve kablo birbirine uygun. Mac, bu limite kadar her an ihtiyaç duyduğu kadar güç çeker.";
 "Charger can deliver up to %lldW, but this cable is only rated to carry %lldW. Replace the cable to charge faster." = "Şarj aleti en fazla %1$lldW verebilir, ancak bu kablo yalnızca %2$lldW için sınıflandırılmış. Daha hızlı şarj için kabloyu değiştirin.";
 "Charging" = "Şarj oluyor";
 "Charging at %lldW (charger can do up to %lldW)" = "%1$lldW ile şarj oluyor (şarj aleti en fazla %2$lldW yapabilir)";
 "Charging only" = "Yalnızca şarj";
-"Charging well at %lldW" = "%lldW ile iyi şarj oluyor";
+"Charging well · up to %lldW" = "İyi şarj oluyor · en fazla %lldW";
 "Charging · %lldW charger" = "Şarj oluyor · %lldW şarj aleti";
 "System reports charger at %lldW" = "Sistem şarj aletini %lldW olarak bildiriyor";
 "Charging: " = "Şarj: ";

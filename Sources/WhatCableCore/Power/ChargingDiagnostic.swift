@@ -118,8 +118,8 @@ extension ChargingDiagnostic {
                 self.summary = String(localized: "Plugged in, charging on hold", bundle: _coreLocalizedBundle)
                 self.detail = String(localized: "Charger and cable are fine. macOS has paused charging for now, usually a battery charge limit or Optimized Battery Charging. The Mac still draws power from the charger.", bundle: _coreLocalizedBundle)
             } else {
-                self.summary = String(localized: "Charging well at \(n)W", bundle: _coreLocalizedBundle)
-                self.detail = String(localized: "Charger and cable are well-matched.", bundle: _coreLocalizedBundle)
+                self.summary = String(localized: "Charging well · up to \(n)W", bundle: _coreLocalizedBundle)
+                self.detail = String(localized: "Charger and cable are well-matched. The Mac draws what it needs moment to moment, up to this limit.", bundle: _coreLocalizedBundle)
             }
         } else if anotherPortActivelyCharging {
             // No contract on this port, but another port is actively

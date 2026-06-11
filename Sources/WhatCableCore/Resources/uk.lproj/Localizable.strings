@@ -28,12 +28,12 @@
 "Charger: %@" = "Зарядний пристрій: %@";
 "Charger: %@ %@" = "Зарядний пристрій: %1$@ %2$@";
 "Charger identified as %@" = "Зарядний пристрій визначено як %@";
-"Charger and cable are well-matched." = "Зарядний пристрій і кабель добре підходять одне одному.";
+"Charger and cable are well-matched. The Mac draws what it needs moment to moment, up to this limit." = "Зарядний пристрій і кабель добре підходять одне одному. Mac бере стільки потужності, скільки потрібно в даний момент, аж до цього ліміту.";
 "Charger can deliver up to %lldW, but this cable is only rated to carry %lldW. Replace the cable to charge faster." = "Зарядний пристрій може віддавати до %1$lldW, але цей кабель розрахований лише на %2$lldW. Замініть кабель для швидшого заряджання.";
 "Charging" = "Заряджання";
 "Charging at %lldW (charger can do up to %lldW)" = "Заряджання %1$lldW (зарядний пристрій підтримує до %2$lldW)";
 "Charging only" = "Лише заряджання";
-"Charging well at %lldW" = "Нормальне заряджання на %lldW";
+"Charging well · up to %lldW" = "Нормальне заряджання · до %lldW";
 "Charging · %lldW charger" = "Заряджання · зарядний пристрій %lldW";
 "System reports charger at %lldW" = "Система повідомляє про зарядний пристрій на %lldW";
 "Charging: " = "Заряджання: ";

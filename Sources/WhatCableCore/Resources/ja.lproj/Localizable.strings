@@ -28,12 +28,12 @@
 "Charger: %@" = "充電器: %@";
 "Charger: %@ %@" = "充電器: %1$@ %2$@";
 "Charger identified as %@" = "充電器は %@ として認識されました";
-"Charger and cable are well-matched." = "充電器とケーブルは適切に組み合わされています。";
+"Charger and cable are well-matched. The Mac draws what it needs moment to moment, up to this limit." = "充電器とケーブルは適切に組み合わされています。Macはこの上限まで、その時々の必要に応じて電力を引き出します。";
 "Charger can deliver up to %lldW, but this cable is only rated to carry %lldW. Replace the cable to charge faster." = "充電器は最大%1$lld Wを出力できますが、このケーブルは%2$lld Wまでの定格です。より速く充電するにはケーブルを交換してください。";
 "Charging" = "充電";
 "Charging at %lldW (charger can do up to %lldW)" = "%1$lld Wで充電中（充電器の最大出力: %2$lld W）";
 "Charging only" = "充電のみ";
-"Charging well at %lldW" = "%lld Wで良好に充電中";
+"Charging well · up to %lldW" = "良好に充電中 · 最大 %lld W";
 "Charging · %lldW charger" = "充電中 · %lld W充電器";
 "System reports charger at %lldW" = "システムは%lld W充電器と報告";
 "Charging: " = "充電: ";
