@@ -164,6 +164,8 @@ public final class DisplayPortTransportWatcher: ObservableObject {
         }
     }
 
+    // MARK: - IOKit wrapper (private)
+
     private func makeUpdate(from service: io_service_t) -> DisplayPortUpdate? {
         // Read keys individually rather than fetching the full property
         // dictionary. The bulk fetch (IORegistryEntryCreateCFProperties)
@@ -179,6 +181,35 @@ public final class DisplayPortTransportWatcher: ObservableObject {
         var entryID: UInt64 = 0
         guard IORegistryEntryGetRegistryEntryID(service, &entryID) == KERN_SUCCESS else { return nil }
 
+        let portIndex = wcPortIndex(read: read, service: service)
+        let portType = wcPortType(read: read, service: service)
+        // Walk the parent chain to capture the HPM controller UUID.
+        // DisplayPort nodes sit at Port-USB-C@N/DisplayPort, so the controller
+        // is ~2 steps up (AppleHPMInterfaceType10 -> AppleHPMDeviceHALType3).
+        let uuid = wcHPMControllerUUID(for: service)
+
+        return Self.makeUpdate(
+            entryID: entryID,
+            read: read,
+            portIndex: portIndex,
+            portType: portType,
+            hpmControllerUUID: uuid
+        )
+    }
+
+    // MARK: - Parse function (internal, testable)
+
+    /// Parse a DisplayPort transport update from a property-read closure.
+    /// The `portIndex`, `portType`, and `hpmControllerUUID` are passed in so
+    /// the caller (the IOKit wrapper) can resolve them once and tests can
+    /// supply fixed values without IOKit.
+    nonisolated static func makeUpdate(
+        entryID: UInt64,
+        read: (String) -> Any?,
+        portIndex: Int,
+        portType: String,
+        hpmControllerUUID: String?
+    ) -> DisplayPortUpdate? {
         let link = DisplayPortLink(
             active: wcBool(read("Active")),
             laneCount: wcInt(read("LaneCount")),
@@ -206,17 +237,14 @@ public final class DisplayPortTransportWatcher: ObservableObject {
             edid: wcData(read("EDID")) ?? wcData(metadata?["EDID"])
         )
 
+        // NominalSignalingFrequenciesHz can be an opaque CFType in some
+        // text dumps; only decode it when it arrives as an array.
         let freqs: [Int]
         if let arr = read("NominalSignalingFrequenciesHz") as? [Any] {
             freqs = arr.map { wcInt($0) }
         } else {
             freqs = []
         }
-
-        // Walk the parent chain to capture the HPM controller UUID.
-        // DisplayPort nodes sit at Port-USB-C@N/DisplayPort, so the controller
-        // is ~2 steps up (AppleHPMInterfaceType10 -> AppleHPMDeviceHALType3).
-        let uuid = wcHPMControllerUUID(for: service)
 
         let status = IOPortTransportStateDisplayPort(
             link: link,
@@ -255,12 +283,12 @@ public final class DisplayPortTransportWatcher: ObservableObject {
             edidChanged: wcBool(read("EDIDChanged")),
             nominalSignalingFrequenciesHz: freqs,
             index: wcInt(read("Index")),
-            hpmControllerUUID: uuid
+            hpmControllerUUID: hpmControllerUUID
         )
         return DisplayPortUpdate(
             entryID: entryID,
-            portIndex: wcPortIndex(read: read, service: service),
-            portType: wcPortType(read: read, service: service),
+            portIndex: portIndex,
+            portType: portType,
             status: status
         )
     }
