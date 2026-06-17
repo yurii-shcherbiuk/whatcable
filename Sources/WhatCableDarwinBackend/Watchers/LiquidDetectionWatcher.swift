@@ -12,18 +12,11 @@ public final class LiquidDetectionWatcher: ObservableObject {
 
     @Published public private(set) var statuses: [LiquidDetectionUpdate] = []
 
-    public let updates: AsyncStream<LiquidDetectionUpdate>
-
-    private var continuation: AsyncStream<LiquidDetectionUpdate>.Continuation?
     private var notifyPort: IONotificationPortRef?
     private var addedIterator: io_iterator_t = 0
     private var removedIterator: io_iterator_t = 0
 
-    public init() {
-        var continuation: AsyncStream<LiquidDetectionUpdate>.Continuation?
-        updates = AsyncStream { continuation = $0 }
-        self.continuation = continuation
-    }
+    public init() {}
 
     public func start() {
         guard notifyPort == nil else { return }
@@ -107,7 +100,6 @@ public final class LiquidDetectionWatcher: ObservableObject {
                     $0.portIndex == update.portIndex && $0.portType == update.portType
                 }
                 statuses.append(update)
-                continuation?.yield(update)
             }
             IOObjectRelease(service)
         }

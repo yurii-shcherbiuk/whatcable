@@ -20,22 +20,15 @@ public final class VDMIdentityWatcher: ObservableObject {
 
     @Published public private(set) var identities: [VDMIdentityUpdate] = []
 
-    public let updates: AsyncStream<VDMIdentityUpdate>
-
     private static let matchedClasses = [
         "IOPortTransportComponentCCUSBPDSOP",
         "IOPortTransportComponentCCUSBPDSOPp",
     ]
 
-    private var continuation: AsyncStream<VDMIdentityUpdate>.Continuation?
     private var notifyPort: IONotificationPortRef?
     private var iterators: [io_iterator_t] = []
 
-    public init() {
-        var continuation: AsyncStream<VDMIdentityUpdate>.Continuation?
-        updates = AsyncStream { continuation = $0 }
-        self.continuation = continuation
-    }
+    public init() {}
 
     public func start() {
         guard notifyPort == nil else { return }
@@ -131,7 +124,6 @@ public final class VDMIdentityWatcher: ObservableObject {
                     $0.endpoint == update.endpoint
                 }
                 identities.append(update)
-                continuation?.yield(update)
             }
             IOObjectRelease(service)
         }
