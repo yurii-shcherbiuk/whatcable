@@ -95,7 +95,7 @@
 "Raw IOKit registry properties for each USB-C port, the model and capabilities of any connected display (its EDID, with the serial number removed), your macOS version, and chip type. This is the same data visible in System Information." = "प्रत्येक USB-C पोर्ट के लिए रॉ IOKit रजिस्ट्री प्रॉपर्टीज़, किसी भी कनेक्टेड डिस्प्ले का मॉडल और क्षमताएं (उसका EDID, सीरियल नंबर हटाकर), आपका macOS संस्करण और चिप प्रकार। यह वही डेटा है जो System Information में दिखता है।";
 "What happens" = "क्या होता है";
 "What is collected" = "क्या एकत्र किया जाता है";
-"WhatCable runs 17 IOKit probes that read raw USB-C and Thunderbolt data from your Mac's port controller registers. The results are sent to a secure server to help improve cable and port detection." = "WhatCable 17 IOKit प्रोब चलाता है जो आपके Mac के पोर्ट कंट्रोलर रजिस्टर से रॉ USB-C और Thunderbolt डेटा पढ़ते हैं। केबल और पोर्ट डिटेक्शन सुधारने में मदद के लिए परिणाम एक सुरक्षित सर्वर पर भेजे जाते हैं।";
+"WhatCable runs %lld IOKit probes that read raw USB-C and Thunderbolt data from your Mac's port controller registers. The results are sent to a secure server to help improve cable and port detection." = "WhatCable %lld IOKit प्रोब चलाता है जो आपके Mac के पोर्ट कंट्रोलर रजिस्टर से रॉ USB-C और Thunderbolt डेटा पढ़ते हैं। केबल और पोर्ट डिटेक्शन सुधारने में मदद के लिए परिणाम एक सुरक्षित सर्वर पर भेजे जाते हैं।";
 "Your machine's hardware UUID is hashed with SHA-256 before sending. No names, accounts, serial numbers, or personal data are collected or stored." = "भेजने से पहले आपकी मशीन का हार्डवेयर UUID SHA-256 से हैश किया जाता है। कोई नाम, अकाउंट, सीरियल नंबर, या व्यक्तिगत डेटा एकत्र या संग्रहीत नहीं किया जाता।";
 
 /* Negotiation diagnostics + Pro UX (PR #55). English; non-English to be refined by the community translation flow. */
@@ -148,3 +148,6 @@
 "Idle power (U3/CLd)" = "निष्क्रिय शक्ति (U3/CLd)";
 "Max operating temp" = "अधिकतम परिचालन तापमान";
 "Shutdown temp" = "शटडाउन तापमान";
+"Connected over Thunderbolt" = "Thunderbolt के माध्यम से कनेक्टेड";
+"Other USB devices" = "अन्य USB डिवाइस";
+"Reached through a Thunderbolt dock or display, so there's no cable, power, or Thunderbolt data for them." = "ये Thunderbolt डॉक या डिस्प्ले के ज़रिए पहुँचते हैं, इसलिए इनके लिए कोई केबल, पावर या Thunderbolt डेटा नहीं है।";

@@ -23,6 +23,14 @@ public struct USBDevice: Identifiable, Hashable {
     /// `busIndex` when available. `nil` on machines that don't expose
     /// `UsbIOPort` on the XHCI controller.
     public let controllerPortName: String?
+    /// True when this device reached the Mac over a Thunderbolt tunnel rather
+    /// than a native USB-C bus, i.e. it sits behind a Thunderbolt dock or
+    /// display and enumerates under the tunnelled host controller
+    /// (`AppleUSBXHCITR`) with no `UsbIOPort` ancestor. Such devices match no
+    /// physical port (issue #274): there is no native port silicon between them
+    /// and the controller, so `controllerPortName` is `nil` and the normal
+    /// port correlation cannot place them.
+    public let isThunderboltTunnelled: Bool
     /// USB device base class (`bDeviceClass`). `0x11` is the Billboard Device
     /// Class. `nil` when the property is absent.
     public let deviceClass: UInt8?
@@ -50,6 +58,7 @@ public struct USBDevice: Identifiable, Hashable {
         currentMA: Int?,
         busIndex: Int? = nil,
         controllerPortName: String? = nil,
+        isThunderboltTunnelled: Bool = false,
         deviceClass: UInt8? = nil,
         ioClassName: String? = nil,
         billboard: BillboardCapability? = nil,
@@ -68,6 +77,7 @@ public struct USBDevice: Identifiable, Hashable {
         self.currentMA = currentMA
         self.busIndex = busIndex
         self.controllerPortName = controllerPortName
+        self.isThunderboltTunnelled = isThunderboltTunnelled
         self.deviceClass = deviceClass
         self.ioClassName = ioClassName
         self.billboard = billboard

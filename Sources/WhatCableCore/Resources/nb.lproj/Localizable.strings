@@ -483,3 +483,6 @@
 "Plugged in · %lldW charger" = "Tilkoblet · %lldW lader";
 "Plugged in" = "Tilkoblet";
 "Charging on hold (charge limit or Optimized Battery Charging)" = "Lading på pause (ladingsgrense eller Optimalisert batterilading)";
+"Connected over Thunderbolt" = "Tilkoblet via Thunderbolt";
+"Other USB devices" = "Andre USB-enheter";
+"Reached through a Thunderbolt dock or display, so there's no cable, power, or Thunderbolt data for them." = "Nås gjennom en Thunderbolt-dokk eller -skjerm, så det finnes ingen kabel-, strøm- eller Thunderbolt-data for dem.";

@@ -482,3 +482,6 @@
 "Plugged in · %lldW charger" = "Conectado · carregador de %lldW";
 "Plugged in" = "Conectado";
 "Charging on hold (charge limit or Optimized Battery Charging)" = "Carregamento em espera (limite de carga ou Carregamento Otimizado da Bateria)";
+"Connected over Thunderbolt" = "Conectado via Thunderbolt";
+"Other USB devices" = "Outros dispositivos USB";
+"Reached through a Thunderbolt dock or display, so there's no cable, power, or Thunderbolt data for them." = "Acessados por um dock ou monitor Thunderbolt, portanto não há dados de cabo, energia ou Thunderbolt para eles.";

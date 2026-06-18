@@ -68,7 +68,20 @@ public enum JSONFormatter {
             },
             thunderboltSwitches: thunderboltSwitches.enumerated().map { index, sw in
                 IOThunderboltSwitchDTO(sw: sw, index: index, switchIndexByUID: switchIndexByUID)
-            }
+            },
+            otherUSBDevices: {
+                let tunnelled = TunnelledDeviceGrouping.group(
+                    devices: usbDevices,
+                    ports: ports,
+                    thunderboltSwitches: thunderboltSwitches
+                )
+                guard !tunnelled.devices.isEmpty else { return nil }
+                let tree = USBDeviceNode.buildTree(from: tunnelled.devices)
+                return OtherUSBDevicesDTO(
+                    behindPort: tunnelled.hostPortServiceName,
+                    devices: tree.map { USBDeviceDTO(node: $0) }
+                )
+            }()
         )
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
@@ -89,6 +102,19 @@ private struct Output: Codable {
     /// Per-port `thunderboltSwitchIndex` references this graph by array
     /// index rather than nesting the whole switch under each port.
     let thunderboltSwitches: [IOThunderboltSwitchDTO]
+    /// USB devices reached over a Thunderbolt tunnel (behind a dock or display),
+    /// which match no physical port (issue #274). Omitted when there are none.
+    let otherUSBDevices: OtherUSBDevicesDTO?
+}
+
+/// Devices behind a Thunderbolt dock or display. `behindPort` is the
+/// `name` of the one Thunderbolt port they sit behind; it is a nil optional
+/// (so the encoder omits the key entirely) when two or more Thunderbolt
+/// devices are connected and the attribution is ambiguous. So: key present =
+/// attributed to that port; key absent = flat/ambiguous.
+private struct OtherUSBDevicesDTO: Codable {
+    let behindPort: String?
+    let devices: [USBDeviceDTO]
 }
 
 private struct PortDTO: Codable {

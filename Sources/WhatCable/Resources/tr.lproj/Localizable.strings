@@ -95,7 +95,7 @@
 "Raw IOKit registry properties for each USB-C port, the model and capabilities of any connected display (its EDID, with the serial number removed), your macOS version, and chip type. This is the same data visible in System Information." = "Her USB-C bağlantı noktası için ham IOKit kayıt defteri özellikleri, bağlı ekranın modeli ve özellikleri (seri numarası kaldırılmış EDID), macOS sürümünüz ve yonga türünüz. Bu veriler Sistem Bilgileri'nde görünenlerle aynıdır.";
 "What happens" = "Ne olur";
 "What is collected" = "Ne toplanır";
-"WhatCable runs 17 IOKit probes that read raw USB-C and Thunderbolt data from your Mac's port controller registers. The results are sent to a secure server to help improve cable and port detection." = "WhatCable, Mac'inizin bağlantı noktası denetleyici kayıtlarından ham USB-C ve Thunderbolt verilerini okuyan 17 IOKit probu çalıştırır. Sonuçlar, kablo ve bağlantı noktası algılamayı iyileştirmeye yardımcı olmak için güvenli bir sunucuya gönderilir.";
+"WhatCable runs %lld IOKit probes that read raw USB-C and Thunderbolt data from your Mac's port controller registers. The results are sent to a secure server to help improve cable and port detection." = "WhatCable, Mac'inizin bağlantı noktası denetleyici kayıtlarından ham USB-C ve Thunderbolt verilerini okuyan %lld IOKit probu çalıştırır. Sonuçlar, kablo ve bağlantı noktası algılamayı iyileştirmeye yardımcı olmak için güvenli bir sunucuya gönderilir.";
 "Your machine's hardware UUID is hashed with SHA-256 before sending. No names, accounts, serial numbers, or personal data are collected or stored." = "Makinenizin donanım UUID'si gönderilmeden önce SHA-256 ile karma hale getirilir. Ad, hesap, seri numarası veya kişisel veri toplanmaz ya da saklanmaz.";
 
 /* Negotiation diagnostics + Pro UX (PR #55). English; non-English to be refined by the community translation flow. */
@@ -148,3 +148,6 @@
 "Idle power (U3/CLd)" = "Boşta güç tüketimi (U3/CLd)";
 "Max operating temp" = "Maks. çalışma sıcaklığı";
 "Shutdown temp" = "Kapanma sıcaklığı";
+"Connected over Thunderbolt" = "Thunderbolt üzerinden bağlı";
+"Other USB devices" = "Diğer USB aygıtları";
+"Reached through a Thunderbolt dock or display, so there's no cable, power, or Thunderbolt data for them." = "Bir Thunderbolt yerleştirme istasyonu veya ekranı üzerinden erişilir, bu nedenle bunlar için kablo, güç veya Thunderbolt verisi yoktur.";

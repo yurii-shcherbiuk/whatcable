@@ -95,7 +95,7 @@
 "Raw IOKit registry properties for each USB-C port, the model and capabilities of any connected display (its EDID, with the serial number removed), your macOS version, and chip type. This is the same data visible in System Information." = "Необработанные свойства реестра IOKit для каждого порта USB-C, модель и возможности любого подключённого дисплея (его EDID с удалённым серийным номером), версия macOS и тип чипа. Это те же данные, которые видны в «Информации о системе».";
 "What happens" = "Что происходит";
 "What is collected" = "Что собирается";
-"WhatCable runs 17 IOKit probes that read raw USB-C and Thunderbolt data from your Mac's port controller registers. The results are sent to a secure server to help improve cable and port detection." = "WhatCable выполняет 17 зондов IOKit, читающих сырые данные USB-C и Thunderbolt из регистров контроллера портов Mac. Результаты отправляются на защищённый сервер для улучшения определения кабелей и портов.";
+"WhatCable runs %lld IOKit probes that read raw USB-C and Thunderbolt data from your Mac's port controller registers. The results are sent to a secure server to help improve cable and port detection." = "WhatCable выполняет %lld зондов IOKit, читающих сырые данные USB-C и Thunderbolt из регистров контроллера портов Mac. Результаты отправляются на защищённый сервер для улучшения определения кабелей и портов.";
 "Your machine's hardware UUID is hashed with SHA-256 before sending. No names, accounts, serial numbers, or personal data are collected or stored." = "Аппаратный UUID вашего Mac хешируется SHA-256 перед отправкой. Имена, учётные записи, серийные номера и личные данные не собираются и не хранятся.";
 
 /* Negotiation diagnostics + Pro UX (PR #55). English; non-English to be refined by the community translation flow. */
@@ -148,3 +148,6 @@
 "Idle power (U3/CLd)" = "Мощность в режиме ожидания (U3/CLd)";
 "Max operating temp" = "Макс. рабочая температура";
 "Shutdown temp" = "Температура отключения";
+"Connected over Thunderbolt" = "Подключено через Thunderbolt";
+"Other USB devices" = "Другие USB-устройства";
+"Reached through a Thunderbolt dock or display, so there's no cable, power, or Thunderbolt data for them." = "Доступны через док-станцию или дисплей Thunderbolt, поэтому для них нет данных о кабеле, питании или Thunderbolt.";

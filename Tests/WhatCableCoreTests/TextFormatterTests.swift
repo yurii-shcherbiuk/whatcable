@@ -36,7 +36,31 @@ struct TextFormatterTests {
         )
     }
 
+    private func tunnelledDevice(name: String) -> USBDevice {
+        USBDevice(
+            id: 42, locationID: 0x2011_0000,
+            vendorID: 0x05AC, productID: 0x0202,
+            vendorName: "Apple", productName: name,
+            serialNumber: nil, usbVersion: nil, speedRaw: 1,
+            busPowerMA: nil, currentMA: nil,
+            isThunderboltTunnelled: true,
+            rawProperties: [:]
+        )
+    }
+
     // MARK: - Smoke
+
+    @Test("Tunnelled devices render in an 'Other USB devices' section (issue #274)")
+    func tunnelledDevicesRenderFlatSection() {
+        // No Thunderbolt switches, so the device can't be attributed to a port
+        // and falls into the flat section.
+        let output = TextFormatter.render(
+            ports: [makePort()], sources: [], identities: [], showRaw: false,
+            usbDevices: [tunnelledDevice(name: "USB Optical Mouse")]
+        )
+        #expect(output.contains("Other USB devices"))
+        #expect(output.contains("USB Optical Mouse"))
+    }
 
     @Test("Render produces non-empty output")
     func renderProducesNonEmptyOutput() {

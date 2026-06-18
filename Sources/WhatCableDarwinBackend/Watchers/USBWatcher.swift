@@ -135,7 +135,7 @@ public final class USBWatcher: ObservableObject {
             raw[k] = stringify(v)
         }
 
-        let (busIdx, portName) = controllerInfo(for: service, fallback: locationID)
+        let (busIdx, portName, tunnelled) = controllerInfo(for: service, fallback: locationID)
 
         // Read the Billboard Capability Descriptor (advertised Alt Modes and
         // their per-mode state) once, here at device-appearance. One-shot
@@ -156,6 +156,7 @@ public final class USBWatcher: ObservableObject {
             currentMA: current,
             busIndex: busIdx,
             controllerPortName: portName,
+            isThunderboltTunnelled: tunnelled,
             deviceClass: deviceClass,
             ioClassName: ioClassName,
             billboard: billboard,
@@ -175,13 +176,14 @@ public final class USBWatcher: ObservableObject {
     ///     `UsbIOPort` (and for the advanced view).
     ///
     /// Walks up to 20 hops to handle devices behind deeper hub chains.
-    private func controllerInfo(for service: io_service_t, fallback locationID: UInt32) -> (Int?, String?) {
+    private func controllerInfo(for service: io_service_t, fallback locationID: UInt32) -> (Int?, String?, Bool) {
         var current = service
         IOObjectRetain(current)
         defer { IOObjectRelease(current) }
 
         var portName: String?
         var bus: Int?
+        var tunnelled = false
 
         for _ in 0..<20 {
             var parent: io_service_t = 0
@@ -206,6 +208,19 @@ public final class USBWatcher: ObservableObject {
             var classBuf = [CChar](repeating: 0, count: 128)
             IOObjectGetClass(current, &classBuf)
             let className = String(cString: classBuf)
+            // The tunnelled host controller for devices behind a Thunderbolt
+            // dock or display (issue #274). It plays the same role as the native
+            // XHCI controller below, but reached over the TB PCIe tunnel, so we
+            // flag the device and stop the walk at it. There is no `UsbIOPort`
+            // on this path, so `portName` stays nil and the device matches no
+            // physical port.
+            if className.hasPrefix("AppleUSBXHCITR") {
+                tunnelled = true
+                if let loc = (IORegistryEntryCreateCFProperty(current, "locationID" as CFString, kCFAllocatorDefault, 0)?.takeRetainedValue() as? NSNumber)?.uint32Value {
+                    bus = Int((loc >> 24) & 0xFF)
+                }
+                break
+            }
             if className.hasPrefix("AppleT") && className.hasSuffix("USBXHCI") {
                 if let loc = (IORegistryEntryCreateCFProperty(current, "locationID" as CFString, kCFAllocatorDefault, 0)?.takeRetainedValue() as? NSNumber)?.uint32Value {
                     bus = Int((loc >> 24) & 0xFF)
@@ -219,7 +234,7 @@ public final class USBWatcher: ObservableObject {
             // controller's locationID upper byte on Apple Silicon.
             bus = Int((locationID >> 24) & 0xFF)
         }
-        return (bus, portName)
+        return (bus, portName, tunnelled)
     }
 
     nonisolated static func busIndex(fromLocationID locationID: UInt32) -> Int {

@@ -482,3 +482,6 @@
 "Plugged in · %lldW charger" = "Bağlı · %lldW şarj cihazı";
 "Plugged in" = "Bağlı";
 "Charging on hold (charge limit or Optimized Battery Charging)" = "Şarj beklemede (şarj sınırı veya Optimize Edilmiş Batarya Şarjı)";
+"Connected over Thunderbolt" = "Thunderbolt üzerinden bağlı";
+"Other USB devices" = "Diğer USB aygıtları";
+"Reached through a Thunderbolt dock or display, so there's no cable, power, or Thunderbolt data for them." = "Bir Thunderbolt yerleştirme istasyonu veya ekranı üzerinden erişilir, bu nedenle bunlar için kablo, güç veya Thunderbolt verisi yoktur.";

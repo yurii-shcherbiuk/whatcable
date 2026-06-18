@@ -95,7 +95,7 @@
 "Raw IOKit registry properties for each USB-C port, the model and capabilities of any connected display (its EDID, with the serial number removed), your macOS version, and chip type. This is the same data visible in System Information." = "각 USB-C 포트의 IOKit 레지스트리 원시 속성, 연결된 디스플레이의 모델과 성능(EDID에서 일련번호 제거됨), macOS 버전, 칩 종류입니다. 이는 시스템 정보에서 볼 수 있는 것과 동일한 데이터예요.";
 "What happens" = "어떤 일이 일어나나요";
 "What is collected" = "수집되는 정보";
-"WhatCable runs 17 IOKit probes that read raw USB-C and Thunderbolt data from your Mac's port controller registers. The results are sent to a secure server to help improve cable and port detection." = "WhatCable은 Mac의 포트 컨트롤러 레지스터에서 USB-C 및 Thunderbolt 원시 데이터를 읽는 IOKit 프로브 17개를 실행합니다. 그 결과는 케이블과 포트 감지 기능을 개선하기 위해 보안 서버로 전송됩니다.";
+"WhatCable runs %lld IOKit probes that read raw USB-C and Thunderbolt data from your Mac's port controller registers. The results are sent to a secure server to help improve cable and port detection." = "WhatCable은 Mac의 포트 컨트롤러 레지스터에서 USB-C 및 Thunderbolt 원시 데이터를 읽는 IOKit 프로브 %lld개를 실행합니다. 그 결과는 케이블과 포트 감지 기능을 개선하기 위해 보안 서버로 전송됩니다.";
 "Your machine's hardware UUID is hashed with SHA-256 before sending. No names, accounts, serial numbers, or personal data are collected or stored." = "기기의 하드웨어 UUID는 전송 전에 SHA-256으로 해시 처리됩니다. 이름, 계정, 일련번호 등 개인 데이터는 수집하거나 저장하지 않아요.";
 
 /* Negotiation diagnostics + Pro UX (PR #55). English; non-English to be refined by the community translation flow. */
@@ -148,3 +148,6 @@
 "Idle power (U3/CLd)" = "유휴 전력 (U3/CLd)";
 "Max operating temp" = "최대 동작 온도";
 "Shutdown temp" = "종료 온도";
+"Connected over Thunderbolt" = "Thunderbolt로 연결됨";
+"Other USB devices" = "기타 USB 장치";
+"Reached through a Thunderbolt dock or display, so there's no cable, power, or Thunderbolt data for them." = "Thunderbolt 도크나 디스플레이를 통해 연결되어 있어 케이블, 전력, Thunderbolt 데이터가 없습니다.";

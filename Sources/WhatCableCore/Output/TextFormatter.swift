@@ -31,6 +31,14 @@ public enum TextFormatter {
         let chargingPortKeys = Set(ports.compactMap { port -> String? in
             PowerSource.hasLiveChargingContract(in: filterSources(port, all: sources)) ? port.portKey : nil
         })
+        // Devices behind a Thunderbolt dock or display match no physical port
+        // (issue #274). Group them once: nest under the one connected
+        // Thunderbolt port when unambiguous, else render flat at the end.
+        let tunnelled = TunnelledDeviceGrouping.group(
+            devices: usbDevices,
+            ports: ports,
+            thunderboltSwitches: thunderboltSwitches
+        )
         for (i, port) in ports.enumerated() {
             if i > 0 { out += "\n" }
             let portSources = filterSources(port, all: sources)
@@ -56,7 +64,34 @@ public enum TextFormatter {
                 displayPorts: displayPorts.filter { $0.canonicallyMatches(port: port) },
                 anotherPortActivelyCharging: port.portKey.map { key in chargingPortKeys.contains { $0 != key } } ?? false
             )
+            if port.serviceName == tunnelled.hostPortServiceName {
+                out += renderTunnelledDevices(tunnelled.devices, nested: true)
+            }
         }
+        if tunnelled.hostPortServiceName == nil, !tunnelled.devices.isEmpty {
+            out += renderTunnelledDevices(tunnelled.devices, nested: false)
+        }
+        return out
+    }
+
+    /// Render the Thunderbolt-tunnelled devices block (issue #274). When
+    /// `nested`, it hangs under the one connected Thunderbolt port; otherwise
+    /// it is a flat top-level section. Empty string when there are none.
+    private static func renderTunnelledDevices(_ devices: [USBDevice], nested: Bool) -> String {
+        guard !devices.isEmpty else { return "" }
+        var out = "\n"
+        let title = nested
+            ? String(localized: "Connected over Thunderbolt", bundle: _coreLocalizedBundle)
+            : String(localized: "Other USB devices", bundle: _coreLocalizedBundle)
+        out += ANSI.wrap(ANSI.bold, title + ":") + "\n"
+        let tree = USBDeviceNode.flatten(USBDeviceNode.buildTree(from: devices))
+        for node in tree {
+            let indent = String(repeating: "  ", count: node.depth + 1)
+            let name = node.device.productName ?? String(localized: "Unknown", bundle: _coreLocalizedBundle)
+            let prefix = node.depth > 0 ? "\u{21B3}" : ANSI.wrap(ANSI.gray, "\u{2022}")
+            out += "\(indent)\(prefix) \(name) - \(node.device.speedLabel)\n"
+        }
+        out += "  " + ANSI.wrap(ANSI.dim, String(localized: "Reached through a Thunderbolt dock or display, so there's no cable, power, or Thunderbolt data for them.", bundle: _coreLocalizedBundle)) + "\n"
         return out
     }
 

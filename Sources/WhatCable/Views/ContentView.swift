@@ -185,6 +185,14 @@ struct ContentView: View {
                 let chargingPortKeys = Set(portWatcher.ports.compactMap { port -> String? in
                     PowerSource.hasLiveChargingContract(in: powerWatcher.sources(for: port)) ? port.portKey : nil
                 })
+                // Devices behind a Thunderbolt dock or display match no port
+                // (issue #274). Group once: nest under the single connected
+                // Thunderbolt port when unambiguous, else show a flat card.
+                let tunnelledGroup = TunnelledDeviceGrouping.group(
+                    devices: deviceWatcher.devices,
+                    ports: portWatcher.ports,
+                    thunderboltSwitches: tbWatcher.switches
+                )
                 ScrollView {
                     VStack(spacing: 12) {
                         ForEach(visiblePorts) { port in
@@ -197,6 +205,7 @@ struct ContentView: View {
                             PortCard(
                                 port: port,
                                 devices: matchingDevices(for: port),
+                                tunnelledDevices: port.serviceName == tunnelledGroup.hostPortServiceName ? tunnelledGroup.devices : [],
                                 powerSources: portSources,
                                 identities: pdWatcher.identities(for: port),
                                 thunderboltSwitches: tbWatcher.switches,
@@ -211,6 +220,9 @@ struct ContentView: View {
                                 adapter: adapter,
                                 anotherPortActivelyCharging: port.portKey.map { key in chargingPortKeys.contains { $0 != key } } ?? false
                             )
+                        }
+                        if tunnelledGroup.hostPortServiceName == nil, !tunnelledGroup.devices.isEmpty {
+                            OtherUSBDevicesCard(devices: tunnelledGroup.devices)
                         }
                     }
                     .padding(12)
@@ -444,9 +456,47 @@ struct UpdateBanner: View {
 
 // MARK: - Port card
 
+/// A flat top-level card listing USB devices reached over a Thunderbolt tunnel,
+/// shown when two or more Thunderbolt devices are connected so we can't safely
+/// say which one they sit behind (issue #274). The single-device case nests
+/// under that port's card instead, so this card is the ambiguous fallback.
+struct OtherUSBDevicesCard: View {
+    let devices: [USBDevice]
+
+    var body: some View {
+        let tree = USBDeviceNode.flatten(USBDeviceNode.buildTree(from: devices))
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 8) {
+                Image(systemName: "cable.connector.horizontal")
+                    .foregroundStyle(.secondary)
+                Text(String(localized: "Other USB devices", bundle: _appLocalizedBundle))
+                    .scaledFont(.headline, weight: .semibold)
+            }
+            ForEach(tree) { node in
+                let name = node.device.productName ?? String(localized: "Unknown", bundle: _appLocalizedBundle)
+                let prefix = node.depth > 0 ? "\u{21B3} " : "\u{2022} "
+                Text(verbatim: "\(prefix)\(name) - \(node.device.speedLabel)")
+                    .scaledFont(.callout)
+                    .padding(.leading, CGFloat(node.depth) * 16)
+            }
+            Text(String(localized: "Reached through a Thunderbolt dock or display, so there's no cable, power, or Thunderbolt data for them.", bundle: _appLocalizedBundle))
+                .scaledFont(.caption)
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(14)
+        .background(.quaternary.opacity(0.4), in: RoundedRectangle(cornerRadius: 10))
+    }
+}
+
 struct PortCard: View {
     let port: AppleHPMInterface
     let devices: [USBDevice]
+    /// USB devices reached over a Thunderbolt tunnel that belong behind this
+    /// port's dock or display (issue #274). Non-empty only on the one port a
+    /// single connected Thunderbolt device is on; rendered as its own
+    /// "Connected over Thunderbolt" subsection. Empty otherwise.
+    var tunnelledDevices: [USBDevice] = []
     let powerSources: [PowerSource]
     let identities: [USBPDSOP]
     let thunderboltSwitches: [IOThunderboltSwitch]
@@ -507,6 +557,32 @@ struct PortCard: View {
     var thunderboltTree: [IOThunderboltSwitchNode] {
         guard let root = thunderboltRoot else { return [] }
         return ThunderboltTopology.tree(from: root, in: thunderboltSwitches)
+    }
+
+    /// A titled USB device tree (the "Connected devices" list, reused for the
+    /// "Connected over Thunderbolt" subsection). `note` adds a caption line.
+    @ViewBuilder
+    private func deviceTree(_ devices: [USBDevice], title: String, note: String? = nil) -> some View {
+        let tree = USBDeviceNode.flatten(USBDeviceNode.buildTree(from: devices))
+        VStack(alignment: .leading, spacing: 4) {
+            Text(title)
+                .scaledFont(.subheadline, weight: .semibold)
+                .foregroundStyle(.secondary)
+            ForEach(tree) { node in
+                let name = node.device.productName ?? String(localized: "Unknown", bundle: _appLocalizedBundle)
+                let prefix = node.depth > 0 ? "\u{21B3} " : "\u{2022} "
+                Text(verbatim: "\(prefix)\(name) - \(node.device.speedLabel)")
+                    .scaledFont(.callout)
+                    .padding(.leading, CGFloat(node.depth) * 16)
+            }
+            if let note {
+                Text(note)
+                    .scaledFont(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .padding(.leading, 48)
+        .padding(.top, 4)
     }
 
     private var cableEmarker: USBPDSOP? {
@@ -627,21 +703,15 @@ struct PortCard: View {
             }
 
             if !devices.isEmpty {
-                let tree = USBDeviceNode.flatten(USBDeviceNode.buildTree(from: devices))
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(String(localized: "Connected devices", bundle: _appLocalizedBundle))
-                        .scaledFont(.subheadline, weight: .semibold)
-                        .foregroundStyle(.secondary)
-                    ForEach(tree) { node in
-                        let name = node.device.productName ?? String(localized: "Unknown", bundle: _appLocalizedBundle)
-                        let prefix = node.depth > 0 ? "\u{21B3} " : "\u{2022} "
-                        Text(verbatim: "\(prefix)\(name) - \(node.device.speedLabel)")
-                            .scaledFont(.callout)
-                            .padding(.leading, CGFloat(node.depth) * 16)
-                    }
-                }
-                .padding(.leading, 48)
-                .padding(.top, 4)
+                deviceTree(devices, title: String(localized: "Connected devices", bundle: _appLocalizedBundle))
+            }
+
+            if !tunnelledDevices.isEmpty {
+                deviceTree(
+                    tunnelledDevices,
+                    title: String(localized: "Connected over Thunderbolt", bundle: _appLocalizedBundle),
+                    note: String(localized: "Reached through a Thunderbolt dock or display, so there's no cable, power, or Thunderbolt data for them.", bundle: _appLocalizedBundle)
+                )
             }
 
             if !powerSources.isEmpty && isLive {

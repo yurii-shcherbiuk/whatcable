@@ -37,6 +37,7 @@ final class TestKitRunner: ObservableObject {
         "34_smc_power_keys",
         "35_hpm_port_uuid",
         "36_xhci_port_map",
+        "37_tb_tunnel_port_map",
     ]
 
     private var runTask: Task<Void, Never>?

@@ -484,3 +484,6 @@
    active-cable layout. Hedged wording: we describe the structural fact without
    asserting the cable is fake or definitively active. */
 "E-marker reports passive, but carries active-cable structure (may be a mis-programmed e-marker)" = "E-marker reports passive, but carries active-cable structure (may be a mis-programmed e-marker)";
+"Connected over Thunderbolt" = "Connected over Thunderbolt";
+"Other USB devices" = "Other USB devices";
+"Reached through a Thunderbolt dock or display, so there's no cable, power, or Thunderbolt data for them." = "Reached through a Thunderbolt dock or display, so there's no cable, power, or Thunderbolt data for them.";

@@ -95,7 +95,7 @@
 "Raw IOKit registry properties for each USB-C port, the model and capabilities of any connected display (its EDID, with the serial number removed), your macOS version, and chip type. This is the same data visible in System Information." = "Surowe właściwości rejestru IOKit dla każdego portu USB-C, model i możliwości podłączonego wyświetlacza (jego EDID, z usuniętym numerem seryjnym), wersja systemu macOS i typ układu. To te same dane, które są widoczne w Informacjach o systemie.";
 "What happens" = "Co się dzieje";
 "What is collected" = "Co jest zbierane";
-"WhatCable runs 17 IOKit probes that read raw USB-C and Thunderbolt data from your Mac's port controller registers. The results are sent to a secure server to help improve cable and port detection." = "WhatCable uruchamia 17 sond IOKit, które odczytują surowe dane USB-C i Thunderbolt z rejestrów kontrolera portów Twojego Maca. Wyniki są wysyłane na bezpieczny serwer, aby pomóc ulepszyć wykrywanie kabli i portów.";
+"WhatCable runs %lld IOKit probes that read raw USB-C and Thunderbolt data from your Mac's port controller registers. The results are sent to a secure server to help improve cable and port detection." = "WhatCable uruchamia %lld sond IOKit, które odczytują surowe dane USB-C i Thunderbolt z rejestrów kontrolera portów Twojego Maca. Wyniki są wysyłane na bezpieczny serwer, aby pomóc ulepszyć wykrywanie kabli i portów.";
 "Your machine's hardware UUID is hashed with SHA-256 before sending. No names, accounts, serial numbers, or personal data are collected or stored." = "Sprzętowy UUID Twojej maszyny jest haszowany algorytmem SHA-256 przed wysłaniem. Żadne nazwy, konta, numery seryjne ani dane osobowe nie są zbierane ani przechowywane.";
 
 /* Negotiation diagnostics + Pro UX (PR #55). English; non-English to be refined by the community translation flow. */
@@ -148,3 +148,6 @@
 "Idle power (U3/CLd)" = "Moc w spoczynku (U3/CLd)";
 "Max operating temp" = "Maks. temp. pracy";
 "Shutdown temp" = "Temp. wyłączenia";
+"Connected over Thunderbolt" = "Połączono przez Thunderbolt";
+"Other USB devices" = "Inne urządzenia USB";
+"Reached through a Thunderbolt dock or display, so there's no cable, power, or Thunderbolt data for them." = "Dostępne przez stację dokującą lub monitor Thunderbolt, więc nie ma dla nich danych o kablu, zasilaniu ani Thunderbolt.";

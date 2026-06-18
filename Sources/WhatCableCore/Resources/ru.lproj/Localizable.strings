@@ -482,3 +482,6 @@
 "Plugged in · %lldW charger" = "Подключено · зарядное устройство %lld Вт";
 "Plugged in" = "Подключено";
 "Charging on hold (charge limit or Optimized Battery Charging)" = "Зарядка приостановлена (ограничение заряда или оптимизированная зарядка)";
+"Connected over Thunderbolt" = "Подключено через Thunderbolt";
+"Other USB devices" = "Другие USB-устройства";
+"Reached through a Thunderbolt dock or display, so there's no cable, power, or Thunderbolt data for them." = "Доступны через док-станцию или дисплей Thunderbolt, поэтому для них нет данных о кабеле, питании или Thunderbolt.";

@@ -482,3 +482,6 @@
 "Plugged in · %lldW charger" = "Aangesloten · %lldW oplader";
 "Plugged in" = "Aangesloten";
 "Charging on hold (charge limit or Optimized Battery Charging)" = "Opladen gepauzeerd (laadlimiet of Geoptimaliseerd batterijladen)";
+"Connected over Thunderbolt" = "Verbonden via Thunderbolt";
+"Other USB devices" = "Andere USB-apparaten";
+"Reached through a Thunderbolt dock or display, so there's no cable, power, or Thunderbolt data for them." = "Bereikt via een Thunderbolt-dock of -beeldscherm, dus er zijn geen kabel-, voedings- of Thunderbolt-gegevens voor ze.";

@@ -71,6 +71,34 @@ struct JSONFormatterTests {
         return obj
     }
 
+    // MARK: - Tunnelled devices (issue #274)
+
+    @Test("Tunnelled devices appear in top-level otherUSBDevices, absent otherwise")
+    func otherUSBDevicesBlock() throws {
+        let mouse = USBDevice(
+            id: 42, locationID: 0x2011_0000, vendorID: 0x05AC, productID: 0x0202,
+            vendorName: "Apple", productName: "USB Optical Mouse",
+            serialNumber: nil, usbVersion: nil, speedRaw: 1,
+            busPowerMA: nil, currentMA: nil, isThunderboltTunnelled: true,
+            rawProperties: [:]
+        )
+        // No Thunderbolt switches, so the device can't be attributed to a port:
+        // flat block with a null behindPort.
+        let withDev = parse(try JSONFormatter.render(
+            ports: [makePort()], sources: [], identities: [], showRaw: false,
+            usbDevices: [mouse]))
+        let other = withDev["otherUSBDevices"] as? [String: Any]
+        #expect(other != nil)
+        #expect(other?["behindPort"] == nil)
+        let devices = other?["devices"] as? [[String: Any]]
+        #expect(devices?.first?["name"] as? String == "USB Optical Mouse")
+
+        // Omitted entirely when there are no tunnelled devices.
+        let without = parse(try JSONFormatter.render(
+            ports: [makePort()], sources: [], identities: [], showRaw: false))
+        #expect(without["otherUSBDevices"] == nil)
+    }
+
     // MARK: - Top-level shape
 
     @Test("Top level has version and ports")

@@ -482,3 +482,6 @@
 "Plugged in · %lldW charger" = "Pievienots · %lldW lādētājs";
 "Plugged in" = "Pievienots";
 "Charging on hold (charge limit or Optimized Battery Charging)" = "Uzlāde apturēta (uzlādes ierobežojums vai optimizēta uzlāde)";
+"Connected over Thunderbolt" = "Savienots caur Thunderbolt";
+"Other USB devices" = "Citas USB ierīces";
+"Reached through a Thunderbolt dock or display, so there's no cable, power, or Thunderbolt data for them." = "Sasniegtas caur Thunderbolt doku vai displeju, tāpēc par tām nav kabeļa, jaudas vai Thunderbolt datu.";

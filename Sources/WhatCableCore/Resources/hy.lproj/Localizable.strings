@@ -483,3 +483,6 @@
 "Plugged in · %lldW charger" = "Միացված · %lldW լիցքավորիչ";
 "Plugged in" = "Միացված";
 "Charging on hold (charge limit or Optimized Battery Charging)" = "Լիցքավորումը կասեցված է (լիցքի սահմանաչափ կամ Օպտիմիզացված լիցքավորում)";
+"Connected over Thunderbolt" = "Միացված է Thunderbolt-ով";
+"Other USB devices" = "Այլ USB սարքեր";
+"Reached through a Thunderbolt dock or display, so there's no cable, power, or Thunderbolt data for them." = "Հասանելի են Thunderbolt դոկի կամ էկրանի միջոցով, ուստի դրանց համար չկան մալուխի, սնման կամ Thunderbolt տվյալներ։";
