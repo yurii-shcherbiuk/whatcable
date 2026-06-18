@@ -19,6 +19,13 @@ public final class WatcherHub {
     public let trmWatcher     = TRMTransportWatcher()
     public let displayWatcher = DisplayPortTransportWatcher()
 
+    /// Fires once after each steady-poll or burst `refreshAll()`. Lets an
+    /// always-on consumer (the Pro cable-history sampler) sample at the hub's
+    /// own cadence (1 Hz while a UI surface is visible, 30 s idle) without
+    /// starting a second IOKit poll. A bare tick, no payload: the consumer reads
+    /// whichever watcher state it needs after the tick.
+    public let didRefresh = PassthroughSubject<Void, Never>()
+
     private var isStarted = false
     private var pollTask: Task<Void, Never>?
     private var burstTask: Task<Void, Never>?
@@ -78,6 +85,7 @@ public final class WatcherHub {
         usb3Watcher.refresh()
         trmWatcher.refresh()
         displayWatcher.refresh()
+        didRefresh.send(())
     }
 
     private func startPoll() {
