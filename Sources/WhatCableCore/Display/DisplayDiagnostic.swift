@@ -48,6 +48,16 @@ public struct DisplayDiagnostic {
         /// there is no wider link to select, so we can't claim the display is
         /// under-driven. Informational, never a warning. (Issue #246.)
         case compressionPlausible
+        /// DSC is **provably active right now**: the live on-screen mode needs
+        /// more uncompressed bandwidth than the link is carrying, yet the
+        /// picture is reaching the display. That can only happen with
+        /// compression on. Stronger than `.compressionPlausible` (a reasoned
+        /// inference from the link being at the DP ceiling): this one is
+        /// grounded in the empirical gap between `currentMode` and
+        /// `deliveredGbps`. Positive, never a warning. (Jimmy's group feedback:
+        /// users on DSC-needing modes like 4K120 over DP 1.4 were reading the
+        /// old "monitor can do more" shortfall message as a fault.)
+        case compressionActive
     }
 
     /// The resolved numbers behind the verdict, for the Pro "receipts" view.
@@ -135,7 +145,7 @@ public struct DisplayDiagnostic {
     /// means "worth looking at", not "the cable is broken".
     public var isWarning: Bool {
         switch bottleneck {
-        case .fine, .unknownMode, .compressionPlausible: return false
+        case .fine, .unknownMode, .compressionPlausible, .compressionActive: return false
         case .belowMonitorMax, .adapterLimit: return true
         }
     }
@@ -149,6 +159,18 @@ extension DisplayDiagnostic {
     static let assumedBitsPerPixel = 24
     /// Don't declare a shortfall on estimation noise alone.
     static let tolerance = 0.05
+    /// Margin for `.compressionActive`'s "live mode needs more than the link
+    /// carries" check. Kept at 5%, same as the noise margin used elsewhere.
+    ///
+    /// Why no blanking adjustment: `liveModeNeedsCompression` compares an
+    /// active-pixel estimate against the delivered link, while the link
+    /// actually carries the EDID pixel clock (active + blanking, 10-20%
+    /// higher). So if the active estimate already exceeds delivered, the real
+    /// wire is even further over and DSC must be on. The math is conservative
+    /// in our favour, not against it; widening this margin to "absorb blanking"
+    /// would only create a false-negative band where genuine DSC modes get read
+    /// as fine.
+    static let compressionActiveTolerance = 0.05
     /// Per-lane rate (Gbps) at or above which the link is running at a high
     /// rate. HBR3 (8.1 Gbps/lane) is the ceiling over USB-C DisplayPort Alt
     /// Mode; UHBR is higher still. At all lanes and this rate, a shortfall
@@ -290,7 +312,7 @@ extension DisplayDiagnostic {
         let canDo = edid.maxRefreshHz
             .map { String(localized: "up to \($0)Hz", bundle: _coreLocalizedBundle) }
             ?? String(localized: "a higher mode than the link is carrying", bundle: _coreLocalizedBundle)
-        let dscCaveat = " " + String(localized: "This estimate assumes standard colour; a display using compression (DSC) may reach more.", bundle: _coreLocalizedBundle)
+        let dscCaveat = " " + String(localized: "High-resolution displays often use compression (DSC) to fit their top mode through a link like this, so selecting the higher mode in Display settings may reach it normally.", bundle: _coreLocalizedBundle)
 
         if let sinkType {
             self.facts = baseFacts
@@ -334,6 +356,24 @@ extension DisplayDiagnostic {
             self.bottleneck = .compressionPlausible
             self.summary = String(localized: "Display may be using compression to reach its top mode", bundle: _coreLocalizedBundle)
             self.detail = String(localized: "Your \(name) can run \(canDo), which uncompressed would need about \(needLabel). This link is already running every lane at a high rate, carrying about \(haveLabel) (\(laneLabel)). Many high-resolution displays use compression (DSC) to fit their top mode through a link like this, so the link rate alone can't tell whether you're already at your best mode. If the picture looks right, it most likely is.", bundle: _coreLocalizedBundle)
+            return
+        }
+
+        // DSC provably active. The live on-screen mode needs more uncompressed
+        // bandwidth than the link is carrying, yet the picture is reaching the
+        // display. The only way that holds is compression on: this is the link
+        // doing what it's designed to do, not a fault. Stronger than the
+        // ceiling-based `.compressionPlausible` inference above because the
+        // evidence is grounded in CoreGraphics' live mode, not just the link
+        // being at HBR3. This catches the case Jimmy's group flagged: 4K120
+        // DSC-mode displays (DELL U2725QE etc.) over sub-ceiling links being
+        // wrongly read as a shortfall.
+        if let current = dp.currentMode,
+           Self.liveModeNeedsCompression(current, deliveredGbps: delivered) {
+            self.facts = baseFacts
+            self.bottleneck = .compressionActive
+            self.summary = String(localized: "Display running compressed (DSC) to fit through the link", bundle: _coreLocalizedBundle)
+            self.detail = String(localized: "Your \(name) is running \(current.label), which would need more bandwidth than this link carries uncompressed. High-resolution displays use compression (DSC) to fit a mode like this through a link like this. The picture is reaching the display, so this is working as intended.", bundle: _coreLocalizedBundle)
             return
         }
 
@@ -403,6 +443,28 @@ extension DisplayDiagnostic {
     /// Human-readable bandwidth, one decimal place, e.g. "14.4 Gbps".
     static func gbps(_ value: Double) -> String {
         String(format: "%.1f Gbps", value)
+    }
+
+    /// Whether the live on-screen mode demands more bandwidth than the link
+    /// can carry uncompressed: the empirical proof that DSC is active right
+    /// now. Bits per pixel come from `current.bitsPerComponent` when
+    /// CoreGraphics reported it (8bpc -> 24bpp standard, 10bpc -> 30bpp for
+    /// HDR / 10-bit colour), so a HDR mode that legitimately needs more raw
+    /// bandwidth is not misread as DSC. With nil bpc we fall back to the
+    /// 24bpp assumption, which keeps today's behaviour on backends that don't
+    /// plumb bpc.
+    ///
+    /// The 5% tolerance is an estimation-noise margin, not a blanking
+    /// adjustment. The active-pixel figure on the needed side already
+    /// understates the real wire draw (which adds blanking), so "needed >
+    /// delivered" already implies "wire > delivered" by a comfortable margin.
+    /// Widening the tolerance further would only create a false-negative band
+    /// where real DSC modes get read as fine.
+    static func liveModeNeedsCompression(_ current: DisplayCurrentMode, deliveredGbps: Double) -> Bool {
+        guard current.refreshHz > 0 else { return false }
+        let bitsPerPixel = current.bitsPerComponent.map { $0 * 3 } ?? Self.assumedBitsPerPixel
+        let neededGbps = current.pixelThroughput * Double(bitsPerPixel) / 1_000_000_000
+        return neededGbps > deliveredGbps * (1 + Self.compressionActiveTolerance)
     }
 
     /// Whether the live mode meets the monitor's top mode. Compared in one

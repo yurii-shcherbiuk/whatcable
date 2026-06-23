@@ -752,6 +752,7 @@ private struct DisplayDTO: Codable {
         case .adapterLimit: self.bottleneck = "adapterLimit"
         case .unknownMode: self.bottleneck = "unknownMode"
         case .compressionPlausible: self.bottleneck = "compressionPlausible"
+        case .compressionActive: self.bottleneck = "compressionActive"
         }
         switch diagnostic.cableAssessment {
         case .unlikelyTheCable: self.cableAssessment = "unlikelyTheCable"
@@ -775,11 +776,18 @@ private struct CurrentModeDTO: Codable {
     let width: Int
     let height: Int
     let refreshHz: Double
+    /// Bits per channel macOS is driving the framebuffer at (8 / 10 when read,
+    /// nil otherwise). Emitted so a `--json` consumer can see which bits-per-
+    /// pixel value the display diagnostic used: a `.compressionActive` verdict
+    /// reads as 8 -> 24bpp arithmetic, 10 -> 30bpp arithmetic, missing -> the
+    /// 24bpp fallback.
+    let bitsPerComponent: Int?
 
     init(_ mode: DisplayCurrentMode) {
         self.width = mode.width
         self.height = mode.height
         self.refreshHz = mode.refreshHz
+        self.bitsPerComponent = mode.bitsPerComponent
     }
 }
 

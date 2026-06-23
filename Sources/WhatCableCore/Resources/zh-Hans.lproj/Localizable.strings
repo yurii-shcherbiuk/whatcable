@@ -395,7 +395,7 @@
 "%lld of %lld lanes" = "%1$lld/%2$lld 通道";
 "up to %lldHz" = "最高 %lldHz";
 "a higher mode than the link is carrying" = "高于链路当前承载的模式";
-"This estimate assumes standard colour; a display using compression (DSC) may reach more." = "此估算基于标准色彩；使用压缩（DSC）的显示器可能达到更高模式。";
+"High-resolution displays often use compression (DSC) to fit their top mode through a link like this, so selecting the higher mode in Display settings may reach it normally." = "High-resolution displays often use compression (DSC) to fit their top mode through a link like this, so selecting the higher mode in Display settings may reach it normally.";
 "Video is going through a %@ adapter" = "视频正在通过 %@ 适配器传输";
 "Your %@ is reached through a USB-C to %@ adapter, and the link isn't currently carrying the monitor's top mode (%@, about %@); it's carrying about %@ (%@). With an adapter in the chain, the adapter's own limit may be the cap rather than the cable. Trying the monitor over native DisplayPort, or a higher-spec adapter, would tell you which." = "您的 %1$@ 是通过 USB-C 转 %2$@ 适配器连接的，且链路当前未承载显示器的最高模式（%3$@，约 %4$@）；当前仅承载约 %5$@（%6$@）。由于连接中存在适配器，限制瓶颈可能是适配器本身而非线缆。尝试通过原生 DisplayPort 连接显示器，或使用更高规格的适配器，将可以判断是哪一个导致的限制。";
 "Monitor can do more than the link is carrying" = "显示器支持高于当前链路所能承载的模式";
@@ -537,3 +537,7 @@
 /* Built-in display port card (issue #352). English placeholders, community can refine. */
 "%lld displays connected" = "已连接 %lld 台显示器";
 "Built-in %1$@ port %2$lld" = "内置 %1$@ 端口 %2$lld";
+
+"Display running compressed (DSC) to fit through the link" = "Display running compressed (DSC) to fit through the link";
+
+"Your %@ is running %@, which would need more bandwidth than this link carries uncompressed. High-resolution displays use compression (DSC) to fit a mode like this through a link like this. The picture is reaching the display, so this is working as intended." = "Your %@ is running %@, which would need more bandwidth than this link carries uncompressed. High-resolution displays use compression (DSC) to fit a mode like this through a link like this. The picture is reaching the display, so this is working as intended.";

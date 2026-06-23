@@ -394,7 +394,7 @@
 "%lld of %lld lanes" = "레인 %2$lld개 중 %1$lld개";
 "up to %lldHz" = "최대 %lldHz";
 "a higher mode than the link is carrying" = "링크가 현재 전송 중인 것보다 높은 모드";
-"This estimate assumes standard colour; a display using compression (DSC) may reach more." = "이 추정값은 표준 색상을 기준으로 합니다. 압축(DSC)을 사용하는 디스플레이는 더 높은 성능을 낼 수 있어요.";
+"High-resolution displays often use compression (DSC) to fit their top mode through a link like this, so selecting the higher mode in Display settings may reach it normally." = "High-resolution displays often use compression (DSC) to fit their top mode through a link like this, so selecting the higher mode in Display settings may reach it normally.";
 "Video is going through a %@ adapter" = "영상이 %@ 어댑터를 거쳐 가고 있어요";
 "Your %@ is reached through a USB-C to %@ adapter, and the link isn't currently carrying the monitor's top mode (%@, about %@); it's carrying about %@ (%@). With an adapter in the chain, the adapter's own limit may be the cap rather than the cable. Trying the monitor over native DisplayPort, or a higher-spec adapter, would tell you which." = "%1$@이(가) USB-C to %2$@ 어댑터를 거쳐 연결되어 있고, 링크는 현재 모니터의 최고 모드(%3$@, 약 %4$@)를 전송하지 않고 약 %5$@(%6$@)을(를) 전송하고 있어요. 연결 경로에 어댑터가 있으면 케이블이 아니라 어댑터 자체의 한계가 상한일 수 있습니다. 네이티브 DisplayPort로 모니터를 연결하거나 더 높은 사양의 어댑터를 써 보면 어느 쪽인지 알 수 있어요.";
 "Monitor can do more than the link is carrying" = "모니터가 링크가 전송하는 것보다 더 높은 성능을 낼 수 있어요";
@@ -536,3 +536,7 @@
 /* Built-in display port card (issue #352). English placeholders, community can refine. */
 "%lld displays connected" = "%lld displays connected";
 "Built-in %1$@ port %2$lld" = "Built-in %1$@ port %2$lld";
+
+"Display running compressed (DSC) to fit through the link" = "Display running compressed (DSC) to fit through the link";
+
+"Your %@ is running %@, which would need more bandwidth than this link carries uncompressed. High-resolution displays use compression (DSC) to fit a mode like this through a link like this. The picture is reaching the display, so this is working as intended." = "Your %@ is running %@, which would need more bandwidth than this link carries uncompressed. High-resolution displays use compression (DSC) to fit a mode like this through a link like this. The picture is reaching the display, so this is working as intended.";

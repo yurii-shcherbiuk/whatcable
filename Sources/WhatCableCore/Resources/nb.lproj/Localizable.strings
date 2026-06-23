@@ -395,7 +395,7 @@
 "%lld of %lld lanes" = "%lld av %lld baner";
 "up to %lldHz" = "opptil %lld Hz";
 "a higher mode than the link is carrying" = "en høyere modus enn tilkoblingen transporterer";
-"This estimate assumes standard colour; a display using compression (DSC) may reach more." = "Dette estimatet forutsetter standardfarge; en skjerm som bruker komprimering (DSC) kan oppnå mer.";
+"High-resolution displays often use compression (DSC) to fit their top mode through a link like this, so selecting the higher mode in Display settings may reach it normally." = "High-resolution displays often use compression (DSC) to fit their top mode through a link like this, so selecting the higher mode in Display settings may reach it normally.";
 "Video is going through a %@ adapter" = "Video går gjennom en %@-adapter";
 "Your %@ is reached through a USB-C to %@ adapter, and the link isn't currently carrying the monitor's top mode (%@, about %@); it's carrying about %@ (%@). With an adapter in the chain, the adapter's own limit may be the cap rather than the cable. Trying the monitor over native DisplayPort, or a higher-spec adapter, would tell you which." = "Din %@ nås via en USB-C til %@-adapter, og tilkoblingen transporterer ikke skjermens toppmodus (%@, omtrent %@) for øyeblikket; den transporterer omtrent %@ (%@). Med en adapter i kjeden kan det være adapterens egen begrensning, og ikke kabelen, som setter taket. Å prøve skjermen med native DisplayPort, eller en adapter med bedre spesifikasjoner, vil avsløre hvilken.";
 "Monitor can do more than the link is carrying" = "Skjermen kan mer enn det tilkoblingen transporterer";
@@ -537,3 +537,7 @@
 /* Built-in display port card (issue #352). English placeholders, community can refine. */
 "%lld displays connected" = "%lld displays connected";
 "Built-in %1$@ port %2$lld" = "Built-in %1$@ port %2$lld";
+
+"Display running compressed (DSC) to fit through the link" = "Display running compressed (DSC) to fit through the link";
+
+"Your %@ is running %@, which would need more bandwidth than this link carries uncompressed. High-resolution displays use compression (DSC) to fit a mode like this through a link like this. The picture is reaching the display, so this is working as intended." = "Your %@ is running %@, which would need more bandwidth than this link carries uncompressed. High-resolution displays use compression (DSC) to fit a mode like this through a link like this. The picture is reaching the display, so this is working as intended.";

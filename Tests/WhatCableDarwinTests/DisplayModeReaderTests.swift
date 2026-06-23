@@ -143,4 +143,47 @@ struct DisplayModeReaderTests {
         let out = DisplayModeReader.match(ports: ports, displays: displays)
         #expect(out[0].currentMode?.width == 3840)
     }
+
+    // MARK: - displayPortBitsPerComponent clamp
+
+    @Test("Bpc clamp accepts only the two depths DP Alt Mode actually carries")
+    func bpcClampAcceptsOnlyKnownDPDepths() {
+        // 8 (24bpp standard) and 10 (30bpp HDR / 10-bit) are the two depths a
+        // DisplayPort Alt Mode link actually carries; they pass through.
+        #expect(DisplayModeReader.displayPortBitsPerComponent(from: 8) == 8)
+        #expect(DisplayModeReader.displayPortBitsPerComponent(from: 10) == 10)
+    }
+
+    @Test("Bpc clamp rejects backing-store framebuffer depths (false-positive guard)")
+    func bpcClampRejectsBackingStoreDepths() {
+        // 16 (NSWindowDepthSixtyfourBitRGB) and 32 (NSWindowDepthOnehundred-
+        // twentyeightBitRGB) describe AppKit's backing store, not the link
+        // encoding. Letting them through would make .compressionActive false-
+        // positive on any 4K60 display the moment macOS reported a 64-bit
+        // framebuffer (review pass #2 caught this on the original loose range).
+        #expect(DisplayModeReader.displayPortBitsPerComponent(from: 16) == nil)
+        #expect(DisplayModeReader.displayPortBitsPerComponent(from: 32) == nil)
+    }
+
+    @Test("Bpc clamp rejects middle values not observed via NSScreen.depth")
+    func bpcClampRejectsMiddleValuesNotObservedHere() {
+        // The clamp uses `== 8 || == 10`, not a range. 9 and 11 aren't defined
+        // DP wire depths at all. 12 IS a valid VESA DP wire depth (MSA color
+        // depth 0b011 in DP 1.4), but the input to this clamp is
+        // `NSScreen.depth.bitsPerSample`, which hasn't been observed to report
+        // 12 on macOS, so we can't confirm 12 from this source maps cleanly to
+        // a 36bpp wire mode. Falling back to the 24bpp default is the safe
+        // direction (under-counts bandwidth -> miss DSC rather than false-
+        // positive). Extend the clamp when a real macOS observation lands.
+        #expect(DisplayModeReader.displayPortBitsPerComponent(from: 9) == nil)
+        #expect(DisplayModeReader.displayPortBitsPerComponent(from: 11) == nil)
+        #expect(DisplayModeReader.displayPortBitsPerComponent(from: 12) == nil)
+    }
+
+    @Test("Bpc clamp rejects zero, negative, and absurd values")
+    func bpcClampRejectsJunkValues() {
+        #expect(DisplayModeReader.displayPortBitsPerComponent(from: 0) == nil)
+        #expect(DisplayModeReader.displayPortBitsPerComponent(from: -1) == nil)
+        #expect(DisplayModeReader.displayPortBitsPerComponent(from: 1000) == nil)
+    }
 }

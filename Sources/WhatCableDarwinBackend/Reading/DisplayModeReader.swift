@@ -1,3 +1,4 @@
+import AppKit
 import CoreGraphics
 import Foundation
 import WhatCableCore
@@ -53,7 +54,9 @@ public enum DisplayModeReader {
 
     /// Public entry point: enrich each DisplayPort node with its live mode where
     /// an unambiguous match exists. Reads CoreGraphics, then defers to the pure
-    /// matcher. Returns the ports unchanged on any read failure.
+    /// matcher. Returns the ports unchanged on any read failure. `@MainActor`
+    /// because the bpc read goes through `NSScreen.screens` underneath.
+    @MainActor
     public static func enrich(_ ports: [IOPortTransportStateDisplayPort]) -> [IOPortTransportStateDisplayPort] {
         let displays = readOnlineDisplays()
         guard !displays.isEmpty else { return ports }
@@ -147,7 +150,9 @@ public enum DisplayModeReader {
     }
 
     /// Read every online display from CoreGraphics. The one platform-specific
-    /// step; everything downstream is pure.
+    /// step; everything downstream is pure. `@MainActor` because the bpc read
+    /// goes through `NSScreen.screens`, which is main-thread-only.
+    @MainActor
     private static func readOnlineDisplays() -> [ResolvedDisplay] {
         var count: UInt32 = 0
         guard CGGetOnlineDisplayList(0, nil, &count) == .success, count > 0 else { return [] }
@@ -156,7 +161,8 @@ public enum DisplayModeReader {
 
         return ids.compactMap { id -> ResolvedDisplay? in
             guard let cgMode = CGDisplayCopyDisplayMode(id) else { return nil }
-            let mode = mode(from: cgMode)
+            let bpc = bitsPerComponent(of: id)
+            let mode = mode(from: cgMode, bitsPerComponent: bpc)
             return ResolvedDisplay(
                 vendorNumber: CGDisplayVendorNumber(id),
                 modelNumber: CGDisplayModelNumber(id),
@@ -171,12 +177,51 @@ public enum DisplayModeReader {
     /// Convert a CoreGraphics mode to our model in physical pixels, NOT points:
     /// a Retina 5K display is 5120 x 2880 here but only 2560 x 1440 via the
     /// point-based getters. Using the point variants would re-create issue #249.
-    private static func mode(from cgMode: CGDisplayMode) -> DisplayCurrentMode {
+    /// `bitsPerComponent` is plumbed in from a separate per-display read because
+    /// `CGDisplayMode` doesn't expose it directly on modern macOS.
+    private static func mode(from cgMode: CGDisplayMode, bitsPerComponent: Int? = nil) -> DisplayCurrentMode {
         DisplayCurrentMode(
             width: cgMode.pixelWidth,
             height: cgMode.pixelHeight,
-            refreshHz: cgMode.refreshRate
+            refreshHz: cgMode.refreshRate,
+            bitsPerComponent: bitsPerComponent
         )
+    }
+
+    /// Read the live bits-per-channel macOS is driving for this display, so the
+    /// display diagnostic can tell DSC apart from a 10bpc HDR mode that just
+    /// needs more bandwidth. We use `NSScreen.depth.bitsPerSample`, the typed
+    /// Swift overlay around the (Swift-obsolete) `NSBitsPerSampleFromDepth` C
+    /// function, which gives us a principled answer without poking at raw
+    /// `NSWindowDepth` constants. The clamp logic is delegated to
+    /// `displayPortBitsPerComponent(from:)` so the integer range check is
+    /// reachable from tests without going through `NSScreen`.
+    @MainActor
+    private static func bitsPerComponent(of id: CGDirectDisplayID) -> Int? {
+        let key = NSDeviceDescriptionKey("NSScreenNumber")
+        guard let screen = NSScreen.screens.first(where: {
+            ($0.deviceDescription[key] as? NSNumber)?.uint32Value == id
+        }) else { return nil }
+        return displayPortBitsPerComponent(from: screen.depth.bitsPerSample)
+    }
+
+    /// Clamp a raw `NSScreen.depth.bitsPerSample` value to the two depths we've
+    /// observed it report on real macOS: 8bpc (24bpp standard) and 10bpc (30bpp
+    /// HDR / 10-bit). Everything else returns nil so the diagnostic falls back
+    /// to its 24bpp default.
+    ///
+    /// The 16bpc / 32bpc values (from `NSWindowDepthSixtyfourBitRGB` /
+    /// `NSWindowDepthOnehundredtwentyeightBitRGB`) describe AppKit's backing
+    /// store, not the link encoding, so they must not flow through as wire bpc.
+    ///
+    /// 12bpc is a defined VESA DP wire depth (MSA color depth `0b011` in DP
+    /// 1.4) but macOS hasn't been observed to report 12 via `NSScreen.depth`,
+    /// so we can't confirm that path maps cleanly to a 36bpp wire mode. Rejected
+    /// here for now; extend when a real macOS observation lands. 9 and 11 are
+    /// not defined wire depths anywhere. Using `==` rather than a range makes
+    /// all of this explicit rather than letting unknown middle values pass.
+    static func displayPortBitsPerComponent(from bps: Int) -> Int? {
+        (bps == 8 || bps == 10) ? bps : nil
     }
 
     /// The display's native top mode from `CGDisplayCopyAllDisplayModes`: the
@@ -191,7 +236,7 @@ public enum DisplayModeReader {
     private static func nativeTopMode(of id: CGDirectDisplayID) -> DisplayCurrentMode? {
         guard let cfModes = CGDisplayCopyAllDisplayModes(id, nil) as? [CGDisplayMode] else { return nil }
         return cfModes
-            .map(mode(from:))
+            .map { mode(from: $0) }
             .max { ($0.width * $0.height, $0.refreshHz) < ($1.width * $1.height, $1.refreshHz) }
     }
 }

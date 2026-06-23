@@ -893,7 +893,7 @@ struct DisplayBanner: View {
 
     private var role: CalloutRole {
         switch diagnostic.bottleneck {
-        case .fine: return .positive
+        case .fine, .compressionActive: return .positive
         case .belowMonitorMax, .adapterLimit: return .warning
         case .unknownMode, .compressionPlausible: return .neutral
         }
@@ -905,7 +905,7 @@ struct DisplayBanner: View {
         case .belowMonitorMax: return "exclamationmark.triangle.fill"
         case .adapterLimit: return "arrow.triangle.swap"
         case .unknownMode: return "questionmark.circle"
-        case .compressionPlausible: return "info.circle"
+        case .compressionPlausible, .compressionActive: return "info.circle"
         }
     }
 

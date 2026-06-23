@@ -539,6 +539,161 @@ struct DisplayDiagnosticTests {
         #expect(diag.billboardNote == nil)
     }
 
+    // MARK: - DSC provably active (Jimmy's group feedback)
+
+    /// DELL U2725QE: 4K 27-inch, DisplayPort 1.4, needs DSC for 4K120. This
+    /// is the case Jimmy's group saw misdiagnosed as a refresh-rate / cable
+    /// issue. EDID claims a 4K120 top mode at 4K60-ish pixel clock (the EDID
+    /// can describe DSC modes with a lower clock); the live mode is the proof.
+    private let dellU2725QE = EDIDInfo(
+        monitorName: "DELL U2725QE",
+        versionMajor: 1, versionMinor: 4,
+        preferredWidth: 3840, preferredHeight: 2160, preferredRefreshHz: 60,
+        preferredPixelClockHz: 533_000_000,
+        maxRefreshHz: 120, maxPixelClockHz: 1_100_000_000
+    )
+
+    @Test("4K120 over a 2-lane HBR3 link with DSC active reads as compressionActive, not a shortfall")
+    func liveModeNeedsDSCIsCompressionActive() throws {
+        // Link: 2 of 4 lanes at HBR3 = 12.96 Gbps usable. Live mode: 4K120 =
+        // ~19.91 Gbps uncompressed (3840 x 2160 x 120 x 24 / 1e9). Picture is on
+        // the screen, so DSC has to be carrying it. Not at the DP ceiling
+        // (lanes < maxLanes), so the existing .compressionPlausible block does
+        // not fire; the new branch catches this.
+        let live = DisplayCurrentMode(width: 3840, height: 2160, refreshHz: 120)
+        let dp = makeDP(lanes: 2, maxLanes: 4, rateDesc: "8.1 Gbps (HBR3)", currentMode: live)
+        let diag = try #require(DisplayDiagnostic(dp: dp, edid: dellU2725QE))
+        #expect(diag.bottleneck == .compressionActive)
+        #expect(diag.isWarning == false)
+        #expect(diag.detail.lowercased().contains("compression"))
+        #expect(diag.detail.contains("3840 x 2160 @ 120Hz"))
+        // The old "monitor can do more / change your resolution" wording must
+        // not appear here: that's the whole point of the fix.
+        #expect(!diag.summary.lowercased().contains("can do more"))
+    }
+
+    @Test("Live mode within the link's capacity falls through to belowMonitorMax (no false DSC claim)")
+    func liveModeWithinLinkDoesNotClaimDSC() throws {
+        // Same DELL panel, but the user is actually at 4K60 (= ~5.97 Gbps
+        // uncompressed) over a 2-lane HBR3 link (12.96 Gbps delivered). The
+        // live mode fits comfortably, so DSC is NOT proven active and the
+        // verdict stays as today's shortfall verdict.
+        let live = DisplayCurrentMode(width: 3840, height: 2160, refreshHz: 60)
+        let dp = makeDP(lanes: 2, maxLanes: 4, rateDesc: "8.1 Gbps (HBR3)", currentMode: live)
+        let diag = try #require(DisplayDiagnostic(dp: dp, edid: dellU2725QE))
+        #expect(diag.bottleneck == .belowMonitorMax)
+    }
+
+    @Test("No current mode keeps today's belowMonitorMax behaviour (regression guard)")
+    func noCurrentModeKeepsShippedBehaviour() throws {
+        // A 2-lane HBR3 link short of the DELL's top mode without a live mode:
+        // the new branch must not fire (no evidence), so the verdict stays as
+        // it was on main before this change.
+        let dp = makeDP(lanes: 2, maxLanes: 4, rateDesc: "8.1 Gbps (HBR3)")
+        let diag = try #require(DisplayDiagnostic(dp: dp, edid: dellU2725QE))
+        #expect(diag.bottleneck == .belowMonitorMax)
+    }
+
+    @Test("compressionActive is not a warning and silences the Billboard note")
+    func compressionActiveSilencesBillboardNote() throws {
+        // Billboard-note gate is `isWarning`. Provably-active DSC is the link
+        // doing its job, not a degraded link, so the note must stay silent.
+        let live = DisplayCurrentMode(width: 3840, height: 2160, refreshHz: 120)
+        let dp = makeDP(lanes: 2, maxLanes: 4, rateDesc: "8.1 Gbps (HBR3)", currentMode: live)
+        let diag = try #require(DisplayDiagnostic(dp: dp, edid: dellU2725QE, billboardPresent: true))
+        #expect(diag.bottleneck == .compressionActive)
+        #expect(diag.billboardNote == nil)
+    }
+
+    @Test("At-ceiling shortfall still prefers compressionPlausible/fine (no regression)")
+    func compressionPlausibleStillWinsAtCeiling() throws {
+        // 4-lane HBR3 with the FO32U2P: the at-ceiling block (above the new
+        // branch) must still claim this first. A matching live mode upgrades
+        // to .fine; no live mode keeps .compressionPlausible. .compressionActive
+        // must not appear here.
+        let dp = makeDP(lanes: 4, maxLanes: 4, rateDesc: "8.1 Gbps (HBR3)")
+        let diag = try #require(DisplayDiagnostic(dp: dp, edid: fo32))
+        #expect(diag.bottleneck == .compressionPlausible)
+    }
+
+    @Test("Adapter limit still wins over compressionActive (HDMI/DVI/VGA branch first)")
+    func adapterStillWins() throws {
+        // Even when the live mode would otherwise satisfy compressionActive's
+        // condition, an HDMI/DVI/VGA adapter in the chain reroutes to
+        // .adapterLimit above the new branch. DSC reasoning doesn't carry
+        // through a converter, so this ordering matters.
+        let live = DisplayCurrentMode(width: 3840, height: 2160, refreshHz: 120)
+        let dp = makeDP(lanes: 2, maxLanes: 4, rateDesc: "8.1 Gbps (HBR3)", dfpType: "HDMI", currentMode: live)
+        let diag = try #require(DisplayDiagnostic(dp: dp, edid: dellU2725QE))
+        #expect(diag.bottleneck == .adapterLimit)
+    }
+
+    @Test("Helper: a zero-refresh live mode is rejected (never a positive claim)")
+    func liveModeNeedsCompressionRejectsZeroRefresh() {
+        let zeroHz = DisplayCurrentMode(width: 3840, height: 2160, refreshHz: 0)
+        #expect(DisplayDiagnostic.liveModeNeedsCompression(zeroHz, deliveredGbps: 1.0) == false)
+    }
+
+    @Test("10bpc catches the DSC case 24bpp would miss (Codex review false-negative)")
+    func tenBpcCatchesUnderestimatedDSC() {
+        // 4K60 over a 12 Gbps link. With the old 24bpp assumption the need is
+        // 3840 x 2160 x 60 x 24 / 1e9 = 11.94 Gbps, under the 12 x 1.15 = 13.8
+        // threshold, so the helper would NOT call DSC. But the live mode is
+        // 10bpc HDR, which truly needs 3840 x 2160 x 60 x 30 / 1e9 = 14.93
+        // Gbps, comfortably over the threshold: DSC IS on, and the bpc plumbing
+        // catches what the bare 24bpp path misses. Codex flagged this as the
+        // false-negative case worth covering.
+        let live8bpc = DisplayCurrentMode(width: 3840, height: 2160, refreshHz: 60, bitsPerComponent: 8)
+        let live10bpc = DisplayCurrentMode(width: 3840, height: 2160, refreshHz: 60, bitsPerComponent: 10)
+        #expect(DisplayDiagnostic.liveModeNeedsCompression(live8bpc, deliveredGbps: 12.0) == false)
+        #expect(DisplayDiagnostic.liveModeNeedsCompression(live10bpc, deliveredGbps: 12.0) == true)
+    }
+
+    @Test("10bpc adds bandwidth budget when delivered headroom is large (no false trigger)")
+    func tenBpcDoesNotFalseTriggerWithHeadroom() {
+        // 4K60 at 10bpc (14.93 Gbps) over a 25 Gbps tunnel: comfortably within
+        // capacity, DSC should not be claimed. Sanity check that lifting bpc
+        // doesn't push every HDR mode into the .compressionActive bucket.
+        let live10bpc = DisplayCurrentMode(width: 3840, height: 2160, refreshHz: 60, bitsPerComponent: 10)
+        #expect(DisplayDiagnostic.liveModeNeedsCompression(live10bpc, deliveredGbps: 25.0) == false)
+    }
+
+    @Test("nil bpc falls back to the 24bpp default (backwards compatible)")
+    func nilBpcFallsBackTo24bpp() {
+        // Pre-bpc-plumbing path. Same numbers as the original .compressionActive
+        // case must still fire so older snapshots without bpc behave identically.
+        let liveNoBpc = DisplayCurrentMode(width: 3840, height: 2160, refreshHz: 120)
+        #expect(liveNoBpc.bitsPerComponent == nil)
+        #expect(DisplayDiagnostic.liveModeNeedsCompression(liveNoBpc, deliveredGbps: 12.96) == true)
+    }
+
+    @Test("5% noise margin: a mode just over the link does not yet claim DSC")
+    func toleranceAbsorbsEstimationNoise() {
+        // 5% is an estimation-noise margin, not a blanking adjustment: when the
+        // active estimate is within 5% of delivered, treat it as "could go
+        // either way" rather than calling DSC. The mode here is 3440 x 1440 at
+        // 110Hz x 24bpp = 13.07 Gbps active, ~0.9% over the 12.96 Gbps link but
+        // within the 5% threshold (13.61 Gbps). Must NOT call this DSC; the
+        // active estimate is too close to the link to draw a confident
+        // conclusion either way.
+        let near = DisplayCurrentMode(width: 3440, height: 1440, refreshHz: 110, bitsPerComponent: 8)
+        #expect(DisplayDiagnostic.liveModeNeedsCompression(near, deliveredGbps: 12.96) == false)
+    }
+
+    @Test("Past the 5% margin but within the old 15% band trips compressionActive")
+    func toleranceGuardsAgainstFalseNegative() {
+        // The earlier code widened the margin to 15%, creating a real false-
+        // negative band: 13.58 Gbps to 14.87 Gbps over a 12.93 Gbps link sat
+        // inside the old 15% margin and was being silently read as fine. Pin
+        // the recovery with a mode that lands squarely in that band: 3440 x
+        // 1440 at 95Hz x 30bpp (10bpc) = 14.12 Gbps. Over 12.93 x 1.05 = 13.58
+        // (so the corrected 5% margin trips it), but under 12.93 x 1.15 = 14.87
+        // (so the old 15% margin missed it). MUST fire on .compressionActive
+        // with the corrected tolerance.
+        let live = DisplayCurrentMode(width: 3440, height: 1440, refreshHz: 95, bitsPerComponent: 10)
+        #expect(DisplayDiagnostic.liveModeNeedsCompression(live, deliveredGbps: 12.93) == true)
+    }
+
     // MARK: - Billboard-device note (gated on a degraded link)
 
     @Test("Billboard note fires only with a below-best-mode link present")

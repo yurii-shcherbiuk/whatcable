@@ -25,11 +25,20 @@ public struct DisplayCurrentMode: Codable, Sendable, Equatable, Hashable {
     /// historically returned 0 for some modes, which the backend treats as
     /// "no usable current mode" and declines to attach.
     public let refreshHz: Double
+    /// Bits per channel (R, G, B) macOS is driving the framebuffer at, when
+    /// CoreGraphics can tell us. 8 for SDR / standard colour; 10 for HDR or
+    /// 10-bit colour modes. Optional: 0 / unreadable values from CoreGraphics
+    /// become nil and the diagnostic falls back to the standard 24 bits-per-
+    /// pixel assumption. Multiply by 3 (RGB) to get bits per pixel; the
+    /// diagnostic uses this to tell DSC apart from a 10bpc HDR mode that
+    /// simply needs more raw bandwidth.
+    public let bitsPerComponent: Int?
 
-    public init(width: Int, height: Int, refreshHz: Double) {
+    public init(width: Int, height: Int, refreshHz: Double, bitsPerComponent: Int? = nil) {
         self.width = width
         self.height = height
         self.refreshHz = refreshHz
+        self.bitsPerComponent = bitsPerComponent
     }
 
     /// Active-pixel throughput (pixels per second): width x height x refresh.
